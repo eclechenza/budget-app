@@ -50,8 +50,40 @@ export default function Overview({ state }) {
   }
 
   // ─── Guards ────────────────────────────────────────────────────────────────
-  if (!state.accounts.length || !months.length)
-    return null
+  if (!state.accounts.length)
+    return (
+      <div className="card">
+        <div className="empty-state">
+          <svg className="empty-state-icon" width="72" height="72" viewBox="0 0 72 72" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="10" y="22" width="52" height="36" rx="5"/>
+            <line x1="10" y1="33" x2="62" y2="33"/>
+            <line x1="20" y1="44" x2="34" y2="44"/>
+            <line x1="20" y1="50" x2="28" y2="50"/>
+            <line x1="50" y1="44" x2="50" y2="54"/>
+            <line x1="45" y1="49" x2="55" y2="49"/>
+          </svg>
+          <div className="empty-state-title">Пока нечего показать</div>
+          <div className="empty-state-text">Перейди в <strong>Настройки</strong> и добавь счета, источники дохода и категории расходов.</div>
+        </div>
+      </div>
+    )
+
+  if (!months.length)
+    return (
+      <div className="card">
+        <div className="empty-state">
+          <svg className="empty-state-icon" width="72" height="72" viewBox="0 0 72 72" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="10" y="14" width="52" height="46" rx="5"/>
+            <line x1="10" y1="28" x2="62" y2="28"/>
+            <line x1="24" y1="8" x2="24" y2="22"/>
+            <line x1="48" y1="8" x2="48" y2="22"/>
+            <polyline points="24,43 31,50 48,36"/>
+          </svg>
+          <div className="empty-state-title">Нет закрытых месяцев</div>
+          <div className="empty-state-text">Введи данные за месяц во вкладке <strong>Ввод данных</strong> и отметь «Месяц закрыт» — после этого появятся графики и статистика.</div>
+        </div>
+      </div>
+    )
 
   // ─── Данные для графиков (вычисляются до Summary, чтобы использовать netExpensesMapped) ──
   const monthlyData = getMonthlyData(state)

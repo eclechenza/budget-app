@@ -86,7 +86,22 @@ export default function Assets({ state }) {
   const { accounts, accountType, accountCur, entries } = state
 
   if (!accounts.length) {
-    return <p className="empty">Перейди в «Настройки» и добавь счета.</p>
+    return (
+      <div className="card">
+        <div className="empty-state">
+          <svg className="empty-state-icon" width="72" height="72" viewBox="0 0 72 72" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="10" y="22" width="52" height="36" rx="5"/>
+            <line x1="10" y1="33" x2="62" y2="33"/>
+            <line x1="20" y1="44" x2="34" y2="44"/>
+            <line x1="20" y1="50" x2="28" y2="50"/>
+            <line x1="50" y1="44" x2="50" y2="54"/>
+            <line x1="45" y1="49" x2="55" y2="49"/>
+          </svg>
+          <div className="empty-state-title">Нет счетов</div>
+          <div className="empty-state-text">Перейди в <strong>Настройки</strong> и добавь счета. Для отображения капитала нужен хотя бы один счёт типа <strong>Актив</strong>.</div>
+        </div>
+      </div>
+    )
   }
 
   // Последний закрытый месяц
@@ -94,7 +109,21 @@ export default function Assets({ state }) {
   const balances  = latestKey ? (entries[latestKey].balances || {}) : {}
 
   if (!latestKey) {
-    return <p className="empty">Нет закрытых месяцев. Закрой хотя бы один месяц в «Вводе данных».</p>
+    return (
+      <div className="card">
+        <div className="empty-state">
+          <svg className="empty-state-icon" width="72" height="72" viewBox="0 0 72 72" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="10" y="14" width="52" height="46" rx="5"/>
+            <line x1="10" y1="28" x2="62" y2="28"/>
+            <line x1="24" y1="8" x2="24" y2="22"/>
+            <line x1="48" y1="8" x2="48" y2="22"/>
+            <polyline points="24,43 31,50 48,36"/>
+          </svg>
+          <div className="empty-state-title">Нет закрытых месяцев</div>
+          <div className="empty-state-text">Введи данные во вкладке <strong>Ввод данных</strong> и отметь «Месяц закрыт» — после этого здесь появится динамика капитала.</div>
+        </div>
+      </div>
+    )
   }
 
   // «Активы по валютам» — выбранный месяц

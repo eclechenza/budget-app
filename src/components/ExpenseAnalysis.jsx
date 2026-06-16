@@ -30,9 +30,40 @@ export default function ExpenseAnalysis({ state }) {
   const [curTab,   setCurTab]   = useState('KZT')
 
   if (!state.accounts.length)
-    return <p className="empty">Перейди в «Настройки» и добавь счета и источники дохода.</p>
+    return (
+      <div className="card">
+        <div className="empty-state">
+          <svg className="empty-state-icon" width="72" height="72" viewBox="0 0 72 72" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="36" cy="36" r="26"/>
+            <line x1="36" y1="10" x2="36" y2="36"/>
+            <line x1="57" y1="25" x2="36" y2="36"/>
+            <line x1="36" y1="36" x2="15" y2="49"/>
+            <line x1="36" y1="10" x2="57" y2="25" strokeDasharray="3 3"/>
+            <line x1="57" y1="25" x2="15" y2="49" strokeDasharray="3 3"/>
+            <line x1="15" y1="49" x2="36" y2="36" strokeDasharray="3 3"/>
+          </svg>
+          <div className="empty-state-title">Нет данных для анализа</div>
+          <div className="empty-state-text">Перейди в <strong>Настройки</strong> и добавь счета, категории расходов и источники дохода.</div>
+        </div>
+      </div>
+    )
+
   if (!months.length)
-    return <p className="empty">Нет закрытых месяцев. Отметь «Месяц закрыт» во вкладке «Ввод данных».</p>
+    return (
+      <div className="card">
+        <div className="empty-state">
+          <svg className="empty-state-icon" width="72" height="72" viewBox="0 0 72 72" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="10" y="14" width="52" height="46" rx="5"/>
+            <line x1="10" y1="28" x2="62" y2="28"/>
+            <line x1="24" y1="8" x2="24" y2="22"/>
+            <line x1="48" y1="8" x2="48" y2="22"/>
+            <polyline points="24,43 31,50 48,36"/>
+          </svg>
+          <div className="empty-state-title">Нет закрытых месяцев</div>
+          <div className="empty-state-text">Введи расходы во вкладке <strong>Ввод данных</strong> и отметь «Месяц закрыт» — после этого появится разбивка по категориям.</div>
+        </div>
+      </div>
+    )
 
   const safeIdx   = Math.min(Math.max(0, monthIdx), months.length - 1)
   const selKey    = months[safeIdx]

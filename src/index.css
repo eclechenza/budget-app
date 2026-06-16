@@ -1530,6 +1530,22 @@ body {
 [data-theme="dark"] .acc-archive-table td.name { color: #444; }
 [data-theme="dark"] .acc-archive-table input { opacity: 0.4; }
 
+/* Empty state */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 3rem 1.5rem;
+  gap: 10px;
+  text-align: center;
+}
+.empty-state-icon { color: #d0d0d0; }
+.empty-state-title { font-size: 15px; font-weight: 500; color: #aaa; }
+.empty-state-text { font-size: 13px; color: #bbb; max-width: 260px; line-height: 1.6; }
+[data-theme="dark"] .empty-state-icon  { color: #333; }
+[data-theme="dark"] .empty-state-title { color: #555; }
+[data-theme="dark"] .empty-state-text  { color: #444; }
+
 /* Utility */
 .empty { text-align: center; padding: 2rem; color: #bbb; font-size: 13px; }
 .empty.small { padding: 0.5rem 0; font-size: 12px; }
