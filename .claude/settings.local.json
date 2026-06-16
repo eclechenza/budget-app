@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install *)",
+      "Bash(export PATH=\"/opt/homebrew/bin:/usr/local/bin:$PATH\")",
+      "Bash(npm --version)",
+      "Read(//Users/vladislav/.nvm/versions/**)",
+      "Read(//Users/vladislav/.volta/**)",
+      "Read(//Users/vladislav/**)",
+      "Bash(npm run *)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(pkill -f \"vite\")",
+      "Bash(pkill -f \"npm run dev\")",
+      "Read(//tmp/**)",
+      "Bash(lsof -ti:5173)",
+      "mcp__figma__get_screenshot",
+      "mcp__figma__use_figma"
+    ]
+  }
+}
