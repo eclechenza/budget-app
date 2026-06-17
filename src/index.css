@@ -1556,3 +1556,115 @@ body {
 .bold { font-weight: 500; }
 .muted { color: #999; }
 .small { font-size: 12px; }
+
+/* Mobile header (hidden on desktop) */
+.mobile-header {
+  display: none;
+}
+.mobile-header-menu {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #1a1a1a;
+  padding: 8px;
+  margin-left: -8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+.mobile-header-menu:hover { background: rgba(0,0,0,.06); }
+.mobile-header-logo {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  height: 28px;
+  width: auto;
+}
+.mobile-header-right { flex-shrink: 0; width: 36px; }
+
+/* Drawer overlay (hidden on desktop) */
+.drawer-overlay { display: none; }
+
+/* Responsive: mobile */
+@media (max-width: 768px) {
+  .mobile-header {
+    display: flex;
+    align-items: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 52px;
+    z-index: 150;
+    background: #f5f5f3;
+    border-bottom: 0.5px solid rgba(0,0,0,.1);
+    padding: 0 16px;
+  }
+
+  .sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 200;
+    box-shadow: none;
+  }
+  .sidebar.open {
+    transform: translateX(0);
+    box-shadow: 6px 0 32px rgba(0,0,0,.18);
+  }
+
+  .drawer-overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.4);
+    z-index: 180;
+  }
+
+  .content {
+    margin-left: 0;
+    width: 100%;
+    padding-top: 52px;
+  }
+
+  /* ── Общие отступы ─────────────────────────────────────────── */
+  .app { padding: 1rem 14px; }
+
+  /* ── Саммари ───────────────────────────────────────────────── */
+  .month-switcher-label { min-width: 90px; }
+
+  /* Плитки: 2×2 вместо 4 в ряд */
+  .tiles-grid { grid-template-columns: repeat(2, 1fr); }
+  .tile { padding: 0.75rem 1rem; }
+
+  /* ── Дашборд ───────────────────────────────────────────────── */
+  /* Переключатель "Постоянный доход" уменьшаем чуть */
+  .perm-toggle-label { font-size: 12px; }
+
+  /* Строка с табами: wrap, чтобы период-табы перешли на вторую строку */
+  .dashboard-tabs-row { flex-wrap: wrap; gap: 6px 10px; margin-bottom: 10px; }
+  .dashboard-tabs-row .cur-tabs { margin-bottom: 0; }
+
+  /* Графики: одна колонка */
+  .charts-grid { grid-template-columns: 1fr; gap: 8px; }
+
+  /* avg6-card уже span 1/-1, остальные тоже full width в 1-col */
+
+  /* Подпись под графиком (avg, рост) */
+  .chart-avg { margin-left: 0; text-align: left; margin-top: 4px; width: 100%; }
+  .chart-avg-cols { justify-content: flex-start; }
+
+  /* Легенда в строку (dash-legend) — переносить при нехватке места */
+  .dash-legend { gap: 4px 10px; }
+  .dash-legend-text { font-size: 11px; }
+
+  /* ── История данных ────────────────────────────────────────── */
+  /* 3 секции (Счета / Доходы / Расходы) стопкой */
+  .detail-cols { flex-direction: column; gap: 12px; }
+}
+
+/* Dark theme — mobile header */
+[data-theme="dark"] .mobile-header        { background: #141414; border-bottom-color: rgba(255,255,255,.08); }
+[data-theme="dark"] .mobile-header-menu   { color: #f0f0f0; }
+[data-theme="dark"] .mobile-header-menu:hover { background: rgba(255,255,255,.07); }

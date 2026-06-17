@@ -13,9 +13,10 @@ const TABS = ['overview', 'assets', 'analysis', 'route', 'rates', 'entry', 'sett
 const TAB_LABELS = { overview: 'Обзор', assets: 'Капитал', analysis: 'Анализ расходов', route: 'Маршрут', rates: 'Курс валют', entry: 'Ввод данных', settings: 'Настройки' }
 
 export default function App() {
-  const [tab,   setTab]   = useState('overview')
-  const [state, setState] = useState(() => loadState())
-  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light')
+  const [tab,        setTab]        = useState('overview')
+  const [state,      setState]      = useState(() => loadState())
+  const [theme,      setTheme]      = useState(() => localStorage.getItem('theme') || 'light')
+  const [drawerOpen, setDrawerOpen] = useState(false)
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
@@ -77,14 +78,33 @@ export default function App() {
     updateState({ ...state, accounts, accountCur, accountType, accountMeta: accountMeta ?? state.accountMeta ?? {}, archivedAccounts: archivedAccounts ?? state.archivedAccounts ?? [], sources, sourceCur, sourceType, archivedSources: archivedSources ?? state.archivedSources ?? [], expenseCategories, expenseCur, archivedExpenses: archivedExpenses ?? state.archivedExpenses ?? [], refundCategories, refundCur, archivedRefunds: archivedRefunds ?? state.archivedRefunds ?? [], refundMapping: newRefundMapping, entries: newEntries })
   }
 
+  function handleTabClick(t) {
+    setTab(t)
+    setDrawerOpen(false)
+  }
+
   return (
     <div className="layout">
-      <nav className="sidebar">
+      <header className="mobile-header">
+        <button className="mobile-header-menu" onClick={() => setDrawerOpen(true)} aria-label="Открыть меню">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+        </button>
+        <img src="/logo-scroooge.svg" alt="Scroooge" className="mobile-header-logo" />
+        <div className="mobile-header-right" />
+      </header>
+
+      {drawerOpen && <div className="drawer-overlay" onClick={() => setDrawerOpen(false)} />}
+
+      <nav className={`sidebar${drawerOpen ? ' open' : ''}`}>
         <img src="/logo-scroooge.svg" alt="Scroooge" className="sidebar-logo" />
         {TABS.map((t) => {
           const Icon = TAB_ICONS[t]
           return (
-            <button key={t} className={tab === t ? 'active' : ''} onClick={() => setTab(t)}>
+            <button key={t} className={tab === t ? 'active' : ''} onClick={() => handleTabClick(t)}>
               <Icon />
               {TAB_LABELS[t]}
             </button>
