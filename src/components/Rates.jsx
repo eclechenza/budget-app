@@ -261,7 +261,7 @@ function fmtResult(num, precision) {
 
 // ─── Блок одной пары ───────────────────────────────────────────────────────
 function RateBlock({ pair, seriesByPeriod, latest }) {
-  const [periodId, setPeriodId] = useState('1m')
+  const [periodId, setPeriodId] = useState('1y')
   const [amount, setAmount] = useState('')
   const [swapped, setSwapped] = useState(false)
 
