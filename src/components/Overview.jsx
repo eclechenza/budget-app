@@ -8,6 +8,7 @@ import SavingsChart        from './SavingsChart'
 import BurnRateChart       from './BurnRateChart'
 import IncomeChart         from './IncomeChart'
 import AverageSixMonths    from './AverageSixMonths'
+import ExpenseAnalysis     from './ExpenseAnalysis'
 
 const SUMMARY_TABS = [
   { id: 'KZT',    label: '₸' },
@@ -161,11 +162,11 @@ export default function Overview({ state }) {
             >›</button>
           </div>
         </div>
-        <div className="cur-tabs">
+        <div className="chips">
           {SUMMARY_TABS.map((t) => (
             <button
               key={t.id}
-              className={`cur-tab${summaryTab === t.id ? ' active' : ''}`}
+              className={`chip${summaryTab === t.id ? ' active' : ''}`}
               onClick={() => setSummaryTab(t.id)}
             >{t.label}</button>
           ))}
@@ -449,20 +450,20 @@ export default function Overview({ state }) {
           </label>
         </div>
         <div className="dashboard-tabs-row">
-          <div className="cur-tabs">
+          <div className="chips">
             {DASHBOARD_TABS.map((t) => (
               <button
                 key={t.id}
-                className={`cur-tab${dashboardTab === t.id ? ' active' : ''}`}
+                className={`chip${dashboardTab === t.id ? ' active' : ''}`}
                 onClick={() => setDashboardTab(t.id)}
               >{t.label}</button>
             ))}
           </div>
-          <div className="avg6-period-tabs">
+          <div className="chips">
             {DASHBOARD_PERIOD_TABS.map((p) => (
               <button
                 key={p.id}
-                className={`avg6-period-tab${dashboardPeriod === p.id ? ' active' : ''}`}
+                className={`chip chip--sm${dashboardPeriod === p.id ? ' active' : ''}`}
                 onClick={() => setDashboardPeriod(p.id)}
               >{p.label}</button>
             ))}
@@ -476,6 +477,9 @@ export default function Overview({ state }) {
           <BurnRateChart monthlyData={monthlyData} tab={dashboardTab} period={dashboardPeriod} permanentOnly={dashboardPermanentOnly} />
         </div>
       </div>
+
+      {/* ── Анализ расходов ─────────────────────────────────────────────── */}
+      <ExpenseAnalysis state={state} />
 
       {/* ── Блок 4: История данных ───────────────────────────────────────── */}
       <div className="card">
@@ -577,7 +581,7 @@ export default function Overview({ state }) {
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
-        <button className="export-btn" onClick={handleExport}>
+        <button className="btn-secondary btn-sm" onClick={handleExport}>
           {copied ? 'Скопировано!' : 'Скопировать статистику'}
         </button>
       </div>

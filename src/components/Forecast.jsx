@@ -164,26 +164,26 @@ export default function Forecast({ state }) {
     <div>
       {/* Tabs row */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-        <div className="cur-tabs" style={{ marginBottom: 0 }}>
+        <div className="chips" style={{ marginBottom: 0 }}>
           {CUR_TABS.map((t) => (
             <button
               key={t.id}
-              className={`cur-tab${cur === t.id ? ' active' : ''}`}
+              className={`chip${cur === t.id ? ' active' : ''}`}
               onClick={() => setCur(t.id)}
             >
               {t.label}
             </button>
           ))}
         </div>
-        <div className="cur-tabs" style={{ marginBottom: 0 }}>
+        <div className="chips" style={{ marginBottom: 0 }}>
           <button
-            className={`cur-tab${mode === 'split' ? ' active' : ''}`}
+            className={`chip${mode === 'split' ? ' active' : ''}`}
             onClick={() => setMode('split')}
           >
             По валютам
           </button>
           <button
-            className={`cur-tab${mode === 'combined' ? ' active' : ''}`}
+            className={`chip${mode === 'combined' ? ' active' : ''}`}
             onClick={() => setMode('combined')}
           >
             Суммарно

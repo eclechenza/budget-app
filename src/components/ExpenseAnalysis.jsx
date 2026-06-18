@@ -89,17 +89,26 @@ export default function ExpenseAnalysis({ state }) {
 
   const displayCur = curTab
 
-  const income = selEntry.income || {}
-  const permanentSources = (state.sources || []).filter((s) => {
-    const t = (state.sourceType || {})[s]
-    return !t || t === 'Постоянный'
-  })
-  const totalIncome = permanentSources.reduce((sum, src) => {
-    const cur = (state.sourceCur || {})[src] || 'KZT'
-    const val = +income[src] || 0
-    const kzt = cvt(val, cur, 'KZT')
-    return sum + cvt(kzt, 'KZT', displayCur)
-  }, 0)
+  // Средний доход за последние 12 закрытых месяцев (все источники), в KZT
+  const avgIncomeKZT = useMemo(() => {
+    const recent = months.slice(-12)
+    if (!recent.length) return 0
+    let total = 0
+    for (const mk of recent) {
+      const e = state.entries[mk]
+      const { year, month } = monthFromKey(mk)
+      const rates = getRatesForMonth(year, month) || { KZT: 1, RUB: null, USD: null }
+      const inc = e.income || {}
+      ;(state.sources || []).forEach((src) => {
+        const cur = (state.sourceCur || {})[src] || 'KZT'
+        const val = +inc[src] || 0
+        total += convertCurrency(val, cur, 'KZT', rates)
+      })
+    }
+    return recent.length > 0 ? total / recent.length : 0
+  }, [months, state])
+
+  const totalIncome = cvt(avgIncomeKZT, 'KZT', displayCur)
 
   const refundMapping = state.refundMapping || {}
 
@@ -180,11 +189,11 @@ export default function ExpenseAnalysis({ state }) {
           </div>
         </div>
 
-        <div className="cur-tabs">
+        <div className="chips">
           {CUR_TABS.map((t) => (
             <button
               key={t.id}
-              className={`cur-tab${curTab === t.id ? ' active' : ''}`}
+              className={`chip${curTab === t.id ? ' active' : ''}`}
               onClick={() => setCurTab(t.id)}
             >
               {t.label}
@@ -206,38 +215,37 @@ export default function ExpenseAnalysis({ state }) {
         {items.length === 0 ? (
           <p className="empty small" style={{ padding: '3rem 0' }}>Нет расходов за этот месяц.</p>
         ) : (
-          <>
-            <div style={{ position: 'relative', height: 240, margin: '0 auto', maxWidth: 240 }}>
-              <Pie data={chartData} options={options} />
-            </div>
-
-            <div className="expense-legend">
-              {items.map((it, i) => {
-                const pct       = totalKZT > 0 ? Math.round((it.netKZT / totalKZT) * 100) : 0
-                const incomePct = totalIncome > 0 ? Math.round((it.netDisplay / totalIncome) * 100) : null
-                return (
-                  <div key={it.cat} className="expense-legend-row">
-                    <span className="expense-legend-dot" style={{ background: PALETTE[i % PALETTE.length] }} />
-                    <span className="expense-legend-name">{it.cat}</span>
-                    <span className="expense-legend-amount">{fmt(Math.round(it.netDisplay))} {sym(it.nativeCur)}</span>
-                    <span className="expense-legend-pct">{pct}%</span>
-                    <span className="expense-legend-income-pct">
-                      {incomePct !== null ? `(${incomePct}% от постоянного дохода)` : '—'}
-                    </span>
-                  </div>
-                )
-              })}
-              <div className="expense-legend-total">
-                <span className="expense-legend-dot" style={{ visibility: 'hidden' }} />
-                <span className="expense-legend-name">Итого</span>
-                <span className="expense-legend-amount">{fmt(Math.round(totalDisplay))} {sym(displayCur)}</span>
-                <span className="expense-legend-pct" />
-                <span className="expense-legend-income-pct">
-                  {totalIncome > 0 ? `(${Math.round((totalDisplay / totalIncome) * 100)}% от постоянного дохода)` : '—'}
-                </span>
+          <div className="expense-chart-layout">
+              <div className="expense-chart-pie">
+                <Pie data={chartData} options={options} />
+              </div>
+              <div className="expense-legend">
+                {items.map((it, i) => {
+                  const pct       = totalKZT > 0 ? Math.round((it.netKZT / totalKZT) * 100) : 0
+                  const incomePct = totalIncome > 0 ? Math.round((it.netDisplay / totalIncome) * 100) : null
+                  return (
+                    <div key={it.cat} className="expense-legend-row">
+                      <span className="expense-legend-dot" style={{ background: PALETTE[i % PALETTE.length] }} />
+                      <span className="expense-legend-name">{it.cat}</span>
+                      <span className="expense-legend-amount">{fmt(Math.round(it.netDisplay))} {sym(it.nativeCur)}</span>
+                      <span className="expense-legend-pct">{pct}%</span>
+                      <span className="expense-legend-income-pct">
+                        {incomePct !== null ? `(${incomePct}% от ср. дохода)` : '—'}
+                      </span>
+                    </div>
+                  )
+                })}
+                <div className="expense-legend-total">
+                  <span className="expense-legend-dot" style={{ visibility: 'hidden' }} />
+                  <span className="expense-legend-name">Итого</span>
+                  <span className="expense-legend-amount">{fmt(Math.round(totalDisplay))} {sym(displayCur)}</span>
+                  <span className="expense-legend-pct" />
+                  <span className="expense-legend-income-pct">
+                    {totalIncome > 0 ? `(${Math.round((totalDisplay / totalIncome) * 100)}% от ср. дохода)` : '—'}
+                  </span>
+                </div>
               </div>
             </div>
-          </>
         )}
       </div>
     </div>

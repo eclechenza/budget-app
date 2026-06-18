@@ -246,11 +246,11 @@ export default function Assets({ state }) {
             >›</button>
           </div>
         </div>
-        <div className="cur-tabs" style={{ marginBottom: 12 }}>
+        <div className="chips" style={{ marginBottom: 12 }}>
           {CURRENCIES.map((c) => (
             <button
               key={c}
-              className={'cur-tab' + (totalCur === c ? ' active' : '')}
+              className={'chip' + (totalCur === c ? ' active' : '')}
               onClick={() => setTotalCur(c)}
             >
               {sym(c)}
@@ -478,7 +478,8 @@ export default function Assets({ state }) {
               max={60}
               value={cushionMonths}
               onChange={(e) => setCushionMonths(Math.max(1, +e.target.value || 1))}
-              className="cushion-input"
+              className="field-input"
+              style={{ width: 52, textAlign: 'center' }}
             />
             <span className="muted" style={{ fontSize: 13 }}>мес.</span>
           </div>

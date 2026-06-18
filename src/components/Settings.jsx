@@ -224,13 +224,13 @@ export default function Settings({ state, onSave, onImport, onSaveInflation, the
     <div>
       <div className="card theme-card">
         <span className="section-title" style={{ marginBottom: 0 }}>Тема</span>
-        <div className="theme-toggle">
+        <div className="chips">
           <button
-            className={`theme-btn${theme === 'light' ? ' active' : ''}`}
+            className={`chip${theme === 'light' ? ' active' : ''}`}
             onClick={() => onThemeChange('light')}
           >☀ Светлая</button>
           <button
-            className={`theme-btn${theme === 'dark' ? ' active' : ''}`}
+            className={`chip${theme === 'dark' ? ' active' : ''}`}
             onClick={() => onThemeChange('dark')}
           >🌙 Тёмная</button>
         </div>
@@ -246,8 +246,8 @@ export default function Settings({ state, onSave, onImport, onSaveInflation, the
               <input
                 type="text"
                 inputMode="decimal"
-                className="s-meta-yield"
-                style={{ width: 72 }}
+                className="field-input field-input--sm"
+                style={{ width: 72, textAlign: 'right' }}
                 value={inflRates[c]}
                 placeholder="0"
                 onChange={(e) => setInflRates({ ...inflRates, [c]: e.target.value })}

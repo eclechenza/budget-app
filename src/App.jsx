@@ -5,12 +5,11 @@ import Assets          from './components/Assets'
 import FinancialRoute  from './components/FinancialRoute'
 import Entry           from './components/Entry'
 import Settings        from './components/Settings'
-import ExpenseAnalysis from './components/ExpenseAnalysis'
 import Rates           from './components/Rates'
 import { TAB_ICONS }   from './components/TabIcons'
 
-const TABS = ['overview', 'assets', 'analysis', 'route', 'rates', 'entry', 'settings']
-const TAB_LABELS = { overview: 'Обзор', assets: 'Капитал', analysis: 'Анализ расходов', route: 'Маршрут', rates: 'Курс валют', entry: 'Ввод данных', settings: 'Настройки' }
+const TABS = ['overview', 'assets', 'route', 'rates', 'entry', 'settings']
+const TAB_LABELS = { overview: 'Обзор', assets: 'Капитал', route: 'Маршрут', rates: 'Курс валют', entry: 'Ввод данных', settings: 'Настройки' }
 
 export default function App() {
   const [tab,        setTab]        = useState('overview')
@@ -116,7 +115,6 @@ export default function App() {
         <div className="app">
           {tab === 'overview'  && <Overview        state={state} />}
           {tab === 'assets'    && <Assets state={state} />}
-          {tab === 'analysis'  && <ExpenseAnalysis state={state} />}
           {tab === 'route'     && <FinancialRoute  state={state} />}
           {tab === 'rates'     && <Rates state={state} />}
           {tab === 'entry'     && <Entry           state={state} onSave={handleSaveEntry} onSaveSettings={handleSaveSettings} />}

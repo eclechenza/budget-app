@@ -343,11 +343,11 @@ function RateBlock({ pair, seriesByPeriod, latest }) {
     <div className="card">
       <div className="rate-header">
         <div className="rate-title">{pair.title}</div>
-        <div className="cur-tabs">
+        <div className="chips">
           {PERIODS.map((p) => (
             <button
               key={p.id}
-              className={`cur-tab${periodId === p.id ? ' active' : ''}`}
+              className={`chip${periodId === p.id ? ' active' : ''}`}
               onClick={() => setPeriodId(p.id)}
             >
               {p.label}
@@ -368,16 +368,16 @@ function RateBlock({ pair, seriesByPeriod, latest }) {
           )}
         </div>
         <div className="rate-converter">
-          <div className="rate-conv-field">
+          <div className="inp-wrap">
             <input
-              className="rate-conv-input"
               type="text"
               inputMode="decimal"
               placeholder="0"
               value={fmtThousands(amount)}
               onChange={handleAmountChange}
+              style={{ width: 90 }}
             />
-            <span className="rate-conv-unit">{fromUnit}</span>
+            <span className="inp-cur">{fromUnit}</span>
           </div>
           <button
             type="button"
@@ -390,15 +390,16 @@ function RateBlock({ pair, seriesByPeriod, latest }) {
               <path d="M15 10.5H3M6 7.5L3 10.5L6 13.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </button>
-          <div className="rate-conv-field">
+          <div className="inp-wrap">
             <input
-              className="rate-conv-input rate-conv-result"
+              className="rate-conv-result"
               type="text"
               readOnly
               placeholder="0"
               value={fmtResult(resultNum, pair.precision)}
+              style={{ width: 90 }}
             />
-            <span className="rate-conv-unit">{toUnit}</span>
+            <span className="inp-cur">{toUnit}</span>
           </div>
         </div>
       </div>

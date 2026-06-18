@@ -111,16 +111,16 @@ export default function ItemList({ items, curMap, onChange, onAdd, label, typeMa
           >
             <span className="drag-handle">⠿</span>
             <input
-              className="s-name"
-              style={undefined}
+              className="field-input"
+              style={{ flex: '1 1 140px', minWidth: 0 }}
               type="text"
               value={name}
               onChange={(e) => updateName(i, e.target.value)}
             />
             {typeMap && onTypeChange && (
               <select
-                className="s-cur"
-                style={hasMeta ? { flex: '0 0 68px' } : undefined}
+                className="select-inline"
+                style={hasMeta ? { flex: '0 0 68px' } : { flex: 1, minWidth: 0 }}
                 value={typeMap[name] || defaultType || 'Карта'}
                 onChange={(e) => updateType(name, e.target.value)}
               >
@@ -130,8 +130,8 @@ export default function ItemList({ items, curMap, onChange, onAdd, label, typeMa
               </select>
             )}
             <select
-              className="s-cur"
-              style={hasMeta ? { flex: '0 0 52px' } : undefined}
+              className="select-inline"
+              style={hasMeta ? { flex: '0 0 52px' } : { flex: 1, minWidth: 0 }}
               value={curMap[name] || 'KZT'}
               onChange={(e) => updateCur(name, e.target.value)}
             >
@@ -145,7 +145,7 @@ export default function ItemList({ items, curMap, onChange, onAdd, label, typeMa
                   <>
                     <input
                       type="date"
-                      className="s-meta-date"
+                      className="field-input field-input--sm s-meta-date"
                       value={meta.maturityDate || ''}
                       onChange={(e) => updateMeta(name, 'maturityDate', e.target.value)}
                       title="Дата окончания"
@@ -153,7 +153,7 @@ export default function ItemList({ items, curMap, onChange, onAdd, label, typeMa
                     <input
                       type="text"
                       inputMode="decimal"
-                      className="s-meta-yield"
+                      className="field-input field-input--sm s-meta-yield"
                       value={meta.yield || ''}
                       placeholder="%"
                       onChange={(e) => updateMeta(name, 'yield', e.target.value)}
@@ -164,8 +164,16 @@ export default function ItemList({ items, curMap, onChange, onAdd, label, typeMa
               </div>
             )}
             {onArchive
-              ? <button className="archive-btn" onClick={() => onArchive(name)}>В архив</button>
-              : <button className="del-btn" onClick={() => remove(i)}>×</button>
+              ? (
+                <button className="btn-icon btn-icon--box" title="В архив" onClick={() => onArchive(name)}>
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="1" y="1" width="14" height="3.5" rx="1"/>
+                    <path d="M2 5.5h12V13a1 1 0 01-1 1H3a1 1 0 01-1-1V5.5z" opacity="0.75"/>
+                    <line x1="5.5" y1="9.5" x2="10.5" y2="9.5" stroke="white" strokeWidth="1.4" strokeLinecap="round"/>
+                  </svg>
+                </button>
+              )
+              : <button className="btn-icon" onClick={() => remove(i)}>×</button>
             }
           </div>
         )

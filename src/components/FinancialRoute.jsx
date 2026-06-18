@@ -445,16 +445,16 @@ export default function FinancialRoute({ state }) {
     <div>
       {/* Tabs row */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-        <div className="cur-tabs" style={{ marginBottom: 0 }}>
+        <div className="chips" style={{ marginBottom: 0 }}>
           {CUR_TABS.map((t) => (
-            <button key={t.id} className={`cur-tab${cur === t.id ? ' active' : ''}`} onClick={() => setCur(t.id)}>
+            <button key={t.id} className={`chip${cur === t.id ? ' active' : ''}`} onClick={() => setCur(t.id)}>
               {t.label}
             </button>
           ))}
         </div>
-        <div className="cur-tabs" style={{ marginBottom: 0 }}>
-          <button className={`cur-tab${mode === 'combined' ? ' active' : ''}`} onClick={() => setMode('combined')}>Суммарно</button>
-          <button className={`cur-tab${mode === 'split' ? ' active' : ''}`} onClick={() => setMode('split')}>По валютам</button>
+        <div className="chips" style={{ marginBottom: 0 }}>
+          <button className={`chip${mode === 'combined' ? ' active' : ''}`} onClick={() => setMode('combined')}>Суммарно</button>
+          <button className={`chip${mode === 'split' ? ' active' : ''}`} onClick={() => setMode('split')}>По валютам</button>
         </div>
       </div>
 
@@ -465,33 +465,33 @@ export default function FinancialRoute({ state }) {
             <div className="forecast-param">
               <label className="forecast-label">Начальный капитал</label>
               <div className="forecast-input-row">
-                <input type="text" inputMode="numeric" value={fmtInput(p.capital)}
+                <input className="field-input" type="text" inputMode="numeric" value={fmtInput(p.capital)}
                   onChange={(e) => setParam(cur, 'capital', +parseInput(e.target.value) || 0)} />
-                <span className="cur-label">{sym(cur)}</span>
+                <span className="inp-cur">{sym(cur)}</span>
               </div>
             </div>
             <div className="forecast-param">
               <label className="forecast-label">Ежемесячные сбережения</label>
               <div className="forecast-input-row">
-                <input type="text" inputMode="numeric" value={fmtInput(p.savings)}
+                <input className="field-input" type="text" inputMode="numeric" value={fmtInput(p.savings)}
                   onChange={(e) => setParam(cur, 'savings', +parseInput(e.target.value) || 0)} />
-                <span className="cur-label">{sym(cur)}</span>
+                <span className="inp-cur">{sym(cur)}</span>
               </div>
             </div>
             <div className="forecast-param">
               <label className="forecast-label">Ставка вклада, % год.</label>
               <div className="forecast-input-row">
-                <input type="number" step="0.1" min={0} value={p.rate || ''}
+                <input className="field-input" type="number" step="0.1" min={0} value={p.rate || ''}
                   onChange={(e) => setParam(cur, 'rate', +e.target.value)} />
-                <span className="cur-label">%</span>
+                <span className="inp-cur">%</span>
               </div>
             </div>
             <div className="forecast-param">
               <label className="forecast-label">Инфляция, % год.</label>
               <div className="forecast-input-row">
-                <input type="number" step="0.1" min={0} value={p.inflation || ''}
+                <input className="field-input" type="number" step="0.1" min={0} value={p.inflation || ''}
                   onChange={(e) => setParam(cur, 'inflation', +e.target.value)} />
-                <span className="cur-label">%</span>
+                <span className="inp-cur">%</span>
               </div>
             </div>
           </div>
@@ -501,15 +501,15 @@ export default function FinancialRoute({ state }) {
               <span className="forecast-label" style={{ marginBottom: 0 }}>Курс:</span>
               <div className="forecast-input-row">
                 <span className="cur-label" style={{ marginRight: 4 }}>1&nbsp;$&nbsp;=</span>
-                <input type="number" step="1" min={0} value={Math.round(rates.USD)} style={{ width: 72 }}
+                <input className="field-input" type="number" step="1" min={0} value={Math.round(rates.USD)} style={{ width: 72 }}
                   onChange={(e) => setRates((r) => ({ ...r, USD: +e.target.value || 1 }))} />
-                <span className="cur-label">₸</span>
+                <span className="inp-cur">₸</span>
               </div>
               <div className="forecast-input-row">
                 <span className="cur-label" style={{ marginRight: 4 }}>1&nbsp;₽&nbsp;=</span>
-                <input type="number" step="0.01" min={0} value={+rates.RUB.toFixed(2)} style={{ width: 72 }}
+                <input className="field-input" type="number" step="0.01" min={0} value={+rates.RUB.toFixed(2)} style={{ width: 72 }}
                   onChange={(e) => setRates((r) => ({ ...r, RUB: +e.target.value || 1 }))} />
-                <span className="cur-label">₸</span>
+                <span className="inp-cur">₸</span>
               </div>
             </div>
             <div style={{ overflowX: 'auto' }}>
@@ -535,13 +535,13 @@ export default function FinancialRoute({ state }) {
                         <td key={c} style={{ paddingLeft: 8, paddingBottom: 8 }}>
                           <div className="forecast-input-row">
                             {row.numeric ? (
-                              <input type="number" step={row.step} value={params[c][row.key] || ''} min={0} style={{ width: 60 }}
+                              <input className="field-input" type="number" step={row.step} value={params[c][row.key] || ''} min={0} style={{ width: 60 }}
                                 onChange={(e) => setParam(c, row.key, +e.target.value)} />
                             ) : (
-                              <input type="text" inputMode="numeric" value={fmtInput(params[c][row.key])} style={{ width: 80 }}
+                              <input className="field-input" type="text" inputMode="numeric" value={fmtInput(params[c][row.key])} style={{ width: 80 }}
                                 onChange={(e) => setParam(c, row.key, +parseInput(e.target.value) || 0)} />
                             )}
-                            <span className="cur-label">{row.unit || sym(c)}</span>
+                            <span className="inp-cur">{row.unit || sym(c)}</span>
                           </div>
                         </td>
                       ))}
@@ -579,8 +579,8 @@ export default function FinancialRoute({ state }) {
             Сложный процент
           </label>
           <div style={{ display: 'flex', gap: 12 }}>
-            <button className="route-text-btn" onClick={handleSaveParams}>Сохранить</button>
-            <button className="route-text-btn route-text-btn--muted" onClick={handleResetParams}>Сбросить</button>
+            <button className="btn-ghost" onClick={handleSaveParams}>Сохранить</button>
+            <button className="btn-ghost btn-ghost btn-ghost--muted" onClick={handleResetParams}>Сбросить</button>
           </div>
         </div>
       </div>
@@ -665,7 +665,7 @@ export default function FinancialRoute({ state }) {
                 <div key={g.id} className="route-expense-row route-expense-editing">
                   <span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: '50%', background: GOAL_COLORS[i % GOAL_COLORS.length], flexShrink: 0 }} />
                   <input
-                    className="route-text-input"
+                    className="field-input"
                     style={{ flex: 2, minWidth: 0 }}
                     value={editGoalDraft.name}
                     onChange={(ev) => setEditGoalDraft((d) => ({ ...d, name: ev.target.value }))}
@@ -674,31 +674,31 @@ export default function FinancialRoute({ state }) {
                   />
                   <div className="forecast-input-row" style={{ flex: 1, minWidth: 90 }}>
                     <input
-                      type="text" inputMode="numeric"
+                      className="field-input" type="text" inputMode="numeric"
                       value={editGoalDraft.amount}
                       onChange={(ev) => setEditGoalDraft((d) => ({ ...d, amount: ev.target.value }))}
                       onKeyDown={(ev) => { if (ev.key === 'Enter') saveEditGoal(g.id); if (ev.key === 'Escape') cancelEditGoal() }}
                     />
-                    <span className="cur-label">{sym(editGoalDraft.currency || 'KZT')}</span>
+                    <span className="inp-cur">{sym(editGoalDraft.currency || 'KZT')}</span>
                   </div>
                   <select
                     value={editGoalDraft.currency || 'KZT'}
                     onChange={(ev) => setEditGoalDraft((d) => ({ ...d, currency: ev.target.value }))}
-                    className="route-type-select"
+                    className="select-inline"
                   >
                     <option value="KZT">₸ Тенге</option>
                     <option value="RUB">₽ Рубли</option>
                     <option value="USD">$ Доллары</option>
                   </select>
-                  <button className="route-save-btn" onClick={() => saveEditGoal(g.id)} title="Сохранить">✓</button>
-                  <button className="del-btn" onClick={cancelEditGoal} title="Отмена">×</button>
+                  <button className="btn-icon btn-icon--positive" onClick={() => saveEditGoal(g.id)} title="Сохранить">✓</button>
+                  <button className="btn-icon" onClick={cancelEditGoal} title="Отмена">×</button>
                 </div>
               ) : (
                 <div key={g.id} className="route-expense-row" onClick={() => startEditGoal(g)} style={{ cursor: 'pointer' }}>
                   <span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: '50%', background: GOAL_COLORS[i % GOAL_COLORS.length], flexShrink: 0 }} />
                   <span className="route-expense-name">{g.name}</span>
                   <span className="route-expense-amount">{fmt(g.amount)} {sym(g.currency)}</span>
-                  <button className="del-btn" onClick={(ev) => { ev.stopPropagation(); removeGoal(g.id) }}>×</button>
+                  <button className="btn-icon" onClick={(ev) => { ev.stopPropagation(); removeGoal(g.id) }}>×</button>
                 </div>
               )
             )}
@@ -712,19 +712,19 @@ export default function FinancialRoute({ state }) {
             value={newGoalName}
             onChange={(e) => setNewGoalName(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') addGoal() }}
-            className="route-text-input route-expense-input-name"
+            className="field-input route-expense-input-name"
           />
           <div className="forecast-input-row" style={{ flex: 1, minWidth: 120 }}>
             <input
-              type="text" inputMode="numeric"
+              className="field-input" type="text" inputMode="numeric"
               placeholder="Сумма"
               value={newGoalAmount}
               onChange={(e) => setNewGoalAmount(fmtInput(parseInput(e.target.value)))}
               onKeyDown={(e) => { if (e.key === 'Enter') addGoal() }}
             />
-            <span className="cur-label">{sym(newGoalCur)}</span>
+            <span className="inp-cur">{sym(newGoalCur)}</span>
           </div>
-          <select value={newGoalCur} onChange={(e) => setNewGoalCur(e.target.value)} className="route-type-select">
+          <select value={newGoalCur} onChange={(e) => setNewGoalCur(e.target.value)} className="select-inline">
             <option value="KZT">₸ Тенге</option>
             <option value="RUB">₽ Рубли</option>
             <option value="USD">$ Доллары</option>
@@ -746,7 +746,7 @@ export default function FinancialRoute({ state }) {
                 editingExpId === e.id ? (
                   <div key={e.id} className="route-expense-row route-expense-editing">
                     <input
-                      className="route-text-input"
+                      className="field-input"
                       style={{ flex: 2, minWidth: 0 }}
                       value={editExpDraft.name}
                       onChange={(ev) => setEditExpDraft((d) => ({ ...d, name: ev.target.value }))}
@@ -755,28 +755,28 @@ export default function FinancialRoute({ state }) {
                     />
                     <div className="forecast-input-row" style={{ flex: 1, minWidth: 90 }}>
                       <input
-                        type="text" inputMode="numeric"
+                        className="field-input" type="text" inputMode="numeric"
                         value={editExpDraft.amount}
                         onChange={(ev) => setEditExpDraft((d) => ({ ...d, amount: ev.target.value }))}
                         onKeyDown={(ev) => { if (ev.key === 'Enter') saveEditExp(e.id); if (ev.key === 'Escape') cancelEditExp() }}
                       />
-                      <span className="cur-label">{sym(e.currency)}</span>
+                      <span className="inp-cur">{sym(e.currency)}</span>
                     </div>
                     <input
                       type="month"
                       value={editExpDraft.date}
                       onChange={(ev) => setEditExpDraft((d) => ({ ...d, date: ev.target.value }))}
-                      className="route-month-input"
+                      className="field-input field-input--sm"
                     />
-                    <button className="route-save-btn" onClick={() => saveEditExp(e.id)} title="Сохранить">✓</button>
-                    <button className="del-btn" onClick={cancelEditExp} title="Отмена">×</button>
+                    <button className="btn-icon btn-icon--positive" onClick={() => saveEditExp(e.id)} title="Сохранить">✓</button>
+                    <button className="btn-icon" onClick={cancelEditExp} title="Отмена">×</button>
                   </div>
                 ) : (
                   <div key={e.id} className="route-expense-row" onClick={() => startEditExp(e)} style={{ cursor: 'pointer' }}>
                     <span className="route-expense-name">{e.name}</span>
                     <span className="route-expense-date muted">{monthDateLabel(e.date)}</span>
                     <span className="route-expense-amount neg">−{fmt(e.amount)} {sym(e.currency)}</span>
-                    <button className="del-btn" onClick={(ev) => { ev.stopPropagation(); removeExpense(e.id) }}>×</button>
+                    <button className="btn-icon" onClick={(ev) => { ev.stopPropagation(); removeExpense(e.id) }}>×</button>
                   </div>
                 )
               )}
@@ -795,18 +795,18 @@ export default function FinancialRoute({ state }) {
             placeholder="Название"
             value={newExpName}
             onChange={(e) => setNewExpName(e.target.value)}
-            className="route-text-input route-expense-input-name"
+            className="field-input route-expense-input-name"
           />
           <div className="forecast-input-row" style={{ flex: 1, minWidth: 120 }}>
             <input
-              type="text" inputMode="numeric"
+              className="field-input" type="text" inputMode="numeric"
               placeholder="Сумма"
               value={newExpAmount}
               onChange={(e) => setNewExpAmount(fmtInput(parseInput(e.target.value)))}
             />
-            <span className="cur-label">{sym(cur)}</span>
+            <span className="inp-cur">{sym(cur)}</span>
           </div>
-          <input type="month" value={newExpDate} onChange={(e) => setNewExpDate(e.target.value)} className="route-month-input" />
+          <input type="month" value={newExpDate} onChange={(e) => setNewExpDate(e.target.value)} className="field-input field-input--sm" />
           <button className="btn-primary" onClick={addExpense} style={{ flexShrink: 0 }}>+</button>
         </div>
       </div>
@@ -823,7 +823,7 @@ export default function FinancialRoute({ state }) {
                 editingSavId === s.id ? (
                   <div key={s.id} className="route-expense-row route-expense-editing">
                     <input
-                      className="route-text-input"
+                      className="field-input"
                       style={{ flex: 2, minWidth: 0 }}
                       value={editSavDraft.name}
                       onChange={(ev) => setEditSavDraft((d) => ({ ...d, name: ev.target.value }))}
@@ -832,17 +832,17 @@ export default function FinancialRoute({ state }) {
                     />
                     <div className="forecast-input-row" style={{ flex: 1, minWidth: 90 }}>
                       <input
-                        type="text" inputMode="numeric"
+                        className="field-input" type="text" inputMode="numeric"
                         value={editSavDraft.amount}
                         onChange={(ev) => setEditSavDraft((d) => ({ ...d, amount: ev.target.value }))}
                         onKeyDown={(ev) => { if (ev.key === 'Enter') saveEditSav(s.id); if (ev.key === 'Escape') cancelEditSav() }}
                       />
-                      <span className="cur-label">{sym(editSavDraft.currency || 'KZT')}</span>
+                      <span className="inp-cur">{sym(editSavDraft.currency || 'KZT')}</span>
                     </div>
                     <select
                       value={editSavDraft.currency || 'KZT'}
                       onChange={(ev) => setEditSavDraft((d) => ({ ...d, currency: ev.target.value }))}
-                      className="route-type-select"
+                      className="select-inline"
                     >
                       <option value="KZT">₸ Тенге</option>
                       <option value="RUB">₽ Рубли</option>
@@ -852,18 +852,18 @@ export default function FinancialRoute({ state }) {
                       type="month"
                       value={editSavDraft.date}
                       onChange={(ev) => setEditSavDraft((d) => ({ ...d, date: ev.target.value }))}
-                      className="route-month-input"
+                      className="field-input field-input--sm"
                     />
                     <select
                       value={editSavDraft.type}
                       onChange={(ev) => setEditSavDraft((d) => ({ ...d, type: ev.target.value }))}
-                      className="route-type-select"
+                      className="select-inline"
                     >
                       <option value="once">Единоразово</option>
                       <option value="recurring">Постоянное</option>
                     </select>
-                    <button className="route-save-btn" onClick={() => saveEditSav(s.id)} title="Сохранить">✓</button>
-                    <button className="del-btn" onClick={cancelEditSav} title="Отмена">×</button>
+                    <button className="btn-icon btn-icon--positive" onClick={() => saveEditSav(s.id)} title="Сохранить">✓</button>
+                    <button className="btn-icon" onClick={cancelEditSav} title="Отмена">×</button>
                   </div>
                 ) : (
                   <div key={s.id} className="route-expense-row" onClick={() => startEditSav(s)} style={{ cursor: 'pointer' }}>
@@ -871,7 +871,7 @@ export default function FinancialRoute({ state }) {
                     <span className="route-expense-date muted">{monthDateLabel(s.date)}</span>
                     <span className="route-expense-amount pos">+{fmt(s.amount)} {sym(s.currency)}</span>
                     <span className="route-type-badge">{s.type === 'once' ? 'Раз' : '∞'}</span>
-                    <button className="del-btn" onClick={(ev) => { ev.stopPropagation(); removePlannedSaving(s.id) }}>×</button>
+                    <button className="btn-icon" onClick={(ev) => { ev.stopPropagation(); removePlannedSaving(s.id) }}>×</button>
                   </div>
                 )
               )}
@@ -885,24 +885,24 @@ export default function FinancialRoute({ state }) {
             placeholder="Название"
             value={newSavName}
             onChange={(e) => setNewSavName(e.target.value)}
-            className="route-text-input route-expense-input-name"
+            className="field-input route-expense-input-name"
           />
           <div className="forecast-input-row" style={{ flex: 1, minWidth: 100 }}>
             <input
-              type="text" inputMode="numeric"
+              className="field-input" type="text" inputMode="numeric"
               placeholder="Сумма"
               value={newSavAmount}
               onChange={(e) => setNewSavAmount(fmtInput(parseInput(e.target.value)))}
             />
-            <span className="cur-label">{sym(newSavCur)}</span>
+            <span className="inp-cur">{sym(newSavCur)}</span>
           </div>
-          <select value={newSavCur} onChange={(e) => setNewSavCur(e.target.value)} className="route-type-select">
+          <select value={newSavCur} onChange={(e) => setNewSavCur(e.target.value)} className="select-inline">
             <option value="KZT">₸ Тенге</option>
             <option value="RUB">₽ Рубли</option>
             <option value="USD">$ Доллары</option>
           </select>
-          <input type="month" value={newSavDate} onChange={(e) => setNewSavDate(e.target.value)} className="route-month-input" />
-          <select value={newSavType} onChange={(e) => setNewSavType(e.target.value)} className="route-type-select">
+          <input type="month" value={newSavDate} onChange={(e) => setNewSavDate(e.target.value)} className="field-input field-input--sm" />
+          <select value={newSavType} onChange={(e) => setNewSavType(e.target.value)} className="select-inline">
             <option value="once">Единоразово</option>
             <option value="recurring">Постоянное</option>
           </select>

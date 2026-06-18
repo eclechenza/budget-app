@@ -399,7 +399,7 @@ export default function Entry({ state, onSave, onSaveSettings }) {
   return (
     <div>
       <div className="month-select">
-        <select value={selectedMonth} onChange={(e) => handleMonthChange(e.target.value)}>
+        <select className="field-input" style={{ width: 140 }} value={selectedMonth} onChange={(e) => handleMonthChange(e.target.value)}>
           {months.map((o) => (
             <option key={o.k} value={o.k}>{o.label}</option>
           ))}
@@ -414,7 +414,8 @@ export default function Entry({ state, onSave, onSaveSettings }) {
         </label>
       </div>
 
-      {/* ── Счета ── */}
+      {/* ── Счета + Доходы ── */}
+      <div className="entry-top-row">
       <div className="card">
         <div className="section-title-row">
           <div className="section-title">Остатки по счетам</div>
@@ -429,9 +430,9 @@ export default function Entry({ state, onSave, onSaveSettings }) {
         </div>
         {editingAccounts ? (
           <>
-            <div className="acc-tabs" style={{ marginBottom: 12 }}>
-              <button className={`acc-tab${accountsTab === 'active' ? ' active' : ''}`} onClick={() => setAccountsTab('active')}>Активные</button>
-              <button className={`acc-tab${accountsTab === 'archive' ? ' active' : ''}`} onClick={() => setAccountsTab('archive')}>Архив</button>
+            <div className="chips" style={{ marginBottom: 12 }}>
+              <button className={`chip chip--sm${accountsTab === 'active' ? ' active' : ''}`} onClick={() => setAccountsTab('active')}>Активные</button>
+              <button className={`chip chip--sm${accountsTab === 'archive' ? ' active' : ''}`} onClick={() => setAccountsTab('archive')}>Архив</button>
             </div>
             {accountsTab === 'active' ? (
               <ItemList
@@ -466,10 +467,13 @@ export default function Entry({ state, onSave, onSaveSettings }) {
                       )}
                     </td>
                     <td className="inp">
-                      <input type="text" inputMode="numeric"
-                        value={fmtInput(balances[a] ?? '')} placeholder="0"
-                        onChange={(e) => setBalances({ ...balances, [a]: parseInput(e.target.value) })}
-                      />
+                      <div className="inp-wrap">
+                        <input className="field-input" type="text" inputMode="numeric"
+                          value={fmtInput(balances[a] ?? '')} placeholder="0"
+                          onChange={(e) => setBalances({ ...balances, [a]: parseInput(e.target.value) })}
+                        />
+                        <span className="inp-cur">{sym(c)}</span>
+                      </div>
                     </td>
                     <td className="cur-label">{sym(c)}</td>
                   </tr>
@@ -495,9 +499,9 @@ export default function Entry({ state, onSave, onSaveSettings }) {
         </div>
         {editingSources ? (
           <>
-            <div className="acc-tabs" style={{ marginBottom: 12 }}>
-              <button className={`acc-tab${sourcesTab === 'active' ? ' active' : ''}`} onClick={() => setSourcesTab('active')}>Активные</button>
-              <button className={`acc-tab${sourcesTab === 'archive' ? ' active' : ''}`} onClick={() => setSourcesTab('archive')}>Архив</button>
+            <div className="chips" style={{ marginBottom: 12 }}>
+              <button className={`chip chip--sm${sourcesTab === 'active' ? ' active' : ''}`} onClick={() => setSourcesTab('active')}>Активные</button>
+              <button className={`chip chip--sm${sourcesTab === 'archive' ? ' active' : ''}`} onClick={() => setSourcesTab('archive')}>Архив</button>
             </div>
             {sourcesTab === 'active' ? (
               <ItemList
@@ -521,10 +525,13 @@ export default function Entry({ state, onSave, onSaveSettings }) {
                   <tr key={s}>
                     <td className="name">{s}</td>
                     <td className="inp">
-                      <input type="text" inputMode="numeric"
-                        value={fmtInput(income[s] ?? '')} placeholder="0"
-                        onChange={(e) => setIncome({ ...income, [s]: parseInput(e.target.value) })}
-                      />
+                      <div className="inp-wrap">
+                        <input className="field-input" type="text" inputMode="numeric"
+                          value={fmtInput(income[s] ?? '')} placeholder="0"
+                          onChange={(e) => setIncome({ ...income, [s]: parseInput(e.target.value) })}
+                        />
+                        <span className="inp-cur">{sym(c)}</span>
+                      </div>
                     </td>
                     <td className="cur-label">{sym(c)}</td>
                   </tr>
@@ -535,6 +542,10 @@ export default function Entry({ state, onSave, onSaveSettings }) {
         )}
       </div>
 
+      </div>{/* entry-top-row */}
+
+      {/* ── Расходы + Возвраты ── */}
+      <div className="entry-top-row">
       {/* ── Расходы ── */}
       <div className="card">
         <div className="section-title-row">
@@ -550,9 +561,9 @@ export default function Entry({ state, onSave, onSaveSettings }) {
         </div>
         {editingExpenses ? (
           <>
-            <div className="acc-tabs" style={{ marginBottom: 12 }}>
-              <button className={`acc-tab${expensesTab === 'active' ? ' active' : ''}`} onClick={() => setExpensesTab('active')}>Активные</button>
-              <button className={`acc-tab${expensesTab === 'archive' ? ' active' : ''}`} onClick={() => setExpensesTab('archive')}>Архив</button>
+            <div className="chips" style={{ marginBottom: 12 }}>
+              <button className={`chip chip--sm${expensesTab === 'active' ? ' active' : ''}`} onClick={() => setExpensesTab('active')}>Активные</button>
+              <button className={`chip chip--sm${expensesTab === 'archive' ? ' active' : ''}`} onClick={() => setExpensesTab('archive')}>Архив</button>
             </div>
             {expensesTab === 'active' ? (
               <ItemList
@@ -574,10 +585,13 @@ export default function Entry({ state, onSave, onSaveSettings }) {
                   <tr key={cat}>
                     <td className="name">{cat}</td>
                     <td className="inp">
-                      <input type="text" inputMode="numeric"
-                        value={fmtInput(expenses[cat] ?? '')} placeholder="0"
-                        onChange={(e) => setExpenses({ ...expenses, [cat]: parseInput(e.target.value) })}
-                      />
+                      <div className="inp-wrap">
+                        <input className="field-input" type="text" inputMode="numeric"
+                          value={fmtInput(expenses[cat] ?? '')} placeholder="0"
+                          onChange={(e) => setExpenses({ ...expenses, [cat]: parseInput(e.target.value) })}
+                        />
+                        <span className="inp-cur">{sym(c)}</span>
+                      </div>
                     </td>
                     <td className="cur-label">{sym(c)}</td>
                   </tr>
@@ -605,9 +619,9 @@ export default function Entry({ state, onSave, onSaveSettings }) {
         </div>
         {editingRefunds ? (
           <>
-            <div className="acc-tabs" style={{ marginBottom: 12 }}>
-              <button className={`acc-tab${refundsTab === 'active' ? ' active' : ''}`} onClick={() => setRefundsTab('active')}>Активные</button>
-              <button className={`acc-tab${refundsTab === 'archive' ? ' active' : ''}`} onClick={() => setRefundsTab('archive')}>Архив</button>
+            <div className="chips" style={{ marginBottom: 12 }}>
+              <button className={`chip chip--sm${refundsTab === 'active' ? ' active' : ''}`} onClick={() => setRefundsTab('active')}>Активные</button>
+              <button className={`chip chip--sm${refundsTab === 'archive' ? ' active' : ''}`} onClick={() => setRefundsTab('archive')}>Архив</button>
             </div>
             {refundsTab === 'active' ? (
               <>
@@ -625,7 +639,7 @@ export default function Entry({ state, onSave, onSaveSettings }) {
                         <span style={{ flex: 1, fontSize: '0.9rem' }}>{rcat}</span>
                         <span style={{ padding: '0 8px', color: 'var(--text-muted)' }}>→</span>
                         <select
-                          className="s-cur" style={{ flex: 2, maxWidth: 220 }}
+                          className="select-inline" style={{ flex: 2, maxWidth: 220 }}
                           value={editRefundMapping[rcat] || ''}
                           onChange={(e) => setEditRefundMapping({ ...editRefundMapping, [rcat]: e.target.value || undefined })}
                         >
@@ -652,10 +666,13 @@ export default function Entry({ state, onSave, onSaveSettings }) {
                   <tr key={cat}>
                     <td className="name">{cat}</td>
                     <td className="inp">
-                      <input type="text" inputMode="numeric"
-                        value={fmtInput(refunds[cat] ?? '')} placeholder="0"
-                        onChange={(e) => setRefunds({ ...refunds, [cat]: parseInput(e.target.value) })}
-                      />
+                      <div className="inp-wrap">
+                        <input className="field-input" type="text" inputMode="numeric"
+                          value={fmtInput(refunds[cat] ?? '')} placeholder="0"
+                          onChange={(e) => setRefunds({ ...refunds, [cat]: parseInput(e.target.value) })}
+                        />
+                        <span className="inp-cur">{sym(c)}</span>
+                      </div>
                     </td>
                     <td className="cur-label">{sym(c)}</td>
                   </tr>
@@ -667,6 +684,7 @@ export default function Entry({ state, onSave, onSaveSettings }) {
           <span className="muted small">Нет категорий — добавь через «Редактировать»</span>
         )}
       </div>
+      </div>{/* entry-top-row расходы+возвраты */}
 
       {toast && (
         <div className="toast">
