@@ -1531,6 +1531,8 @@ body {
     padding: 0 16px;
   }
 
+  .sidebar-logo { display: none; }
+
   .sidebar {
     left: auto;
     right: 0;
