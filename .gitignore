@@ -1,3 +1,9 @@
 node_modules/
 dist/
 .DS_Store
+
+# Dev-only icons (local only, never deploy)
+public/icon-dev-192.png
+public/icon-dev-512.png
+public/apple-touch-icon-dev.png
+public/manifest.dev.json
