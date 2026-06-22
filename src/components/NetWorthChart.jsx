@@ -101,7 +101,7 @@ export default function NetWorthChart({ monthlyData: allMonthlyData, tab, period
           <div className="dash-legend">
             <span className="dash-legend-item">
               <span className="dash-legend-text">
-                в среднем {avgMonthlyChange >= 0 ? '+' : ''}{fmt(avgMonthlyChange)} {sym(tab)} в месяц&nbsp;·&nbsp;{growthPct >= 0 ? '+' : ''}{growthPct}% за период
+                в среднем {avgMonthlyChange >= 0 ? '+' : ''}{fmt(avgMonthlyChange)} {sym(tab)} в месяц · {growthPct >= 0 ? '+' : ''}{growthPct}% за период
               </span>
             </span>
           </div>

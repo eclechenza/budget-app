@@ -178,6 +178,7 @@ export default function Overview({ state }) {
           </p>
         )}
 
+        <div className="tiles-grid-wrap">
         <div className="tiles-grid">
 
           {/* 1. Денег всего */}
@@ -431,6 +432,7 @@ export default function Overview({ state }) {
             })()}
           </div>
 
+        </div>
         </div>
       </div>
 
