@@ -132,11 +132,11 @@ export default function AssetsChart({ state, liveRates }) {
           </span>
         )}
       </div>
-      <div className="cur-tabs">
+      <div className="chips">
         {TABS.map((t) => (
           <button
             key={t.id}
-            className={`cur-tab${tab === t.id ? ' active' : ''}`}
+            className={`chip${tab === t.id ? ' active' : ''}`}
             onClick={() => setTab(t.id)}
           >
             {t.label}

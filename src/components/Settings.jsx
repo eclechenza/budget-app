@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { monthLabel, sym, CURRENCIES } from '../utils/storage'
 import { downloadExport, applyImport, validateImport, importSummary } from '../utils/exportImport'
+import { loadGistConfig, connectGist, syncToGist, disconnectGist } from '../utils/gistSync'
 
 const CUR_LABELS = { KZT: 'Тенге (₸)', RUB: 'Рубли (₽)', USD: 'Доллары ($)' }
 
@@ -10,6 +11,11 @@ export default function Settings({ state, onSave, onImport, onSaveInflation, the
   const [ctxCopied, setCtxCopied] = useState(false)
   const [importPending, setImportPending] = useState(null) // { data, summary } | null
   const [deleteConfirm, setDeleteConfirm] = useState(false)
+  const [gistConfig, setGistConfig] = useState(() => loadGistConfig())
+  const [gistToken, setGistToken] = useState('')
+  const [gistConnecting, setGistConnecting] = useState(false)
+  const [gistSyncing, setGistSyncing] = useState(false)
+  const [gistError, setGistError] = useState(null)
   const toastTimer = useRef(null)
   const ctxTimer = useRef(null)
   const fileInputRef = useRef(null)
@@ -22,6 +28,58 @@ export default function Settings({ state, onSave, onImport, onSaveInflation, the
     inflTimer.current = setTimeout(() => { onSaveInflation(inflRates); showToast('success', 'Сохранено') }, 600)
     return () => clearTimeout(inflTimer.current)
   }, [inflRates])
+
+  useEffect(() => {
+    if (!gistConfig) return
+    const id = setInterval(() => setGistConfig(loadGistConfig()), 5000)
+    return () => clearInterval(id)
+  }, [!!gistConfig])
+
+  function formatRelative(isoStr) {
+    const s = Math.floor((Date.now() - new Date(isoStr).getTime()) / 1000)
+    if (s < 60) return 'только что'
+    const m = Math.floor(s / 60)
+    if (m < 60) return `${m} мин назад`
+    const h = Math.floor(m / 60)
+    if (h < 24) return `${h} ч назад`
+    return new Date(isoStr).toLocaleString('ru', { dateStyle: 'short', timeStyle: 'short' })
+  }
+
+  async function handleGistConnect() {
+    if (!gistToken.trim()) return
+    setGistConnecting(true)
+    setGistError(null)
+    try {
+      await connectGist(gistToken.trim())
+      await syncToGist(state)
+      setGistConfig(loadGistConfig())
+      setGistToken('')
+    } catch (err) {
+      setGistError(err.message)
+    } finally {
+      setGistConnecting(false)
+    }
+  }
+
+  async function handleGistSync() {
+    setGistSyncing(true)
+    try {
+      await syncToGist(state)
+      setGistConfig(loadGistConfig())
+      showToast('success', 'Синхронизировано')
+    } catch (err) {
+      showToast('error', `Ошибка синхронизации: ${err.message}`)
+    } finally {
+      setGistSyncing(false)
+    }
+  }
+
+  function handleGistDisconnect() {
+    disconnectGist()
+    setGistConfig(null)
+    setGistToken('')
+    setGistError(null)
+  }
 
   function showToast(type, msg) {
     setToast({ type, msg })
@@ -286,6 +344,76 @@ export default function Settings({ state, onSave, onImport, onSaveInflation, the
           style={{ display: 'none' }}
           onChange={handleFileChange}
         />
+      </div>
+
+      <div className="card">
+        <div className="section-title">Синхронизация с Claude</div>
+        {!gistConfig ? (
+          <div>
+            <div className="data-transfer-desc" style={{ marginBottom: 8 }}>
+              Данные автоматически синхронизируются в приватный GitHub Gist. Поделитесь ссылкой с Claude один раз — и он всегда видит актуальные финансы.
+            </div>
+            <div className="data-transfer-desc" style={{ marginBottom: 12 }}>
+              Нужен <strong>GitHub Personal Access Token</strong> с правом <code style={{ fontFamily: 'monospace', fontSize: 12 }}>gist</code>.{' '}
+              Создать: github.com → Settings → Developer settings → Personal access tokens
+            </div>
+            <div style={{ display: 'flex', gap: 8, marginBottom: gistError ? 8 : 0 }}>
+              <input
+                type="password"
+                className="field-input"
+                style={{ flex: 1 }}
+                placeholder="ghp_..."
+                value={gistToken}
+                onChange={e => setGistToken(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleGistConnect()}
+              />
+              <button
+                className="btn-primary"
+                onClick={handleGistConnect}
+                disabled={!gistToken.trim() || gistConnecting}
+              >
+                {gistConnecting ? 'Подключение...' : 'Подключить'}
+              </button>
+            </div>
+            {gistError && (
+              <div style={{ color: 'var(--red)', fontSize: 13, marginTop: 6 }}>{gistError}</div>
+            )}
+          </div>
+        ) : (
+          <div>
+            <div className="settings-row">
+              <span className="settings-row-label">Статус</span>
+              <span style={{ fontSize: 13, color: gistConfig.lastError ? 'var(--red)' : 'var(--green)' }}>
+                {gistConfig.lastError
+                  ? `Ошибка: ${gistConfig.lastError}`
+                  : gistConfig.lastSync
+                    ? `Синхронизировано ${formatRelative(gistConfig.lastSync)}`
+                    : 'Подключено'}
+              </span>
+            </div>
+            <div className="settings-row" style={{ alignItems: 'flex-start' }}>
+              <span className="settings-row-label" style={{ paddingTop: 2 }}>Ссылка для Claude</span>
+              <div style={{ display: 'flex', gap: 6, alignItems: 'center', minWidth: 0 }}>
+                <code style={{ fontSize: 11, color: 'var(--text-2)', wordBreak: 'break-all', lineHeight: 1.4 }}>
+                  {gistConfig.rawUrl}
+                </code>
+                <button
+                  className="btn-secondary"
+                  style={{ padding: '2px 8px', fontSize: 11, whiteSpace: 'nowrap', flexShrink: 0 }}
+                  onClick={() => navigator.clipboard.writeText(gistConfig.rawUrl).then(() => showToast('success', 'Ссылка скопирована'))}
+                >
+                  Копировать
+                </button>
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+              <button className="btn-secondary" onClick={handleGistSync} disabled={gistSyncing}>
+                {gistSyncing ? 'Синхронизация...' : 'Синхронизировать сейчас'}
+              </button>
+              <button className="btn-danger" onClick={handleGistDisconnect}>Отключить</button>
+            </div>
+          </div>
+        )}
       </div>
 
       <button className="btn-secondary full" onClick={exportProjectContext}>Экспорт контекста проекта</button>

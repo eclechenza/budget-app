@@ -22,6 +22,9 @@ function defaults() {
     archivedRefunds: [],
     refundMapping: {},
     inflationRates: { KZT: '', RUB: '', USD: '' },
+    sourceMeta: {},
+    expenseMeta: {},
+    refundMeta: {},
     entries: {},
   }
 }
@@ -50,6 +53,9 @@ function migrate(data) {
   if (data.refundMapping && typeof data.refundMapping === 'object') d.refundMapping = data.refundMapping
   if (data.entries && typeof data.entries === 'object') d.entries = data.entries
   if (data.inflationRates && typeof data.inflationRates === 'object') d.inflationRates = data.inflationRates
+  if (data.sourceMeta && typeof data.sourceMeta === 'object') d.sourceMeta = data.sourceMeta
+  if (data.expenseMeta && typeof data.expenseMeta === 'object') d.expenseMeta = data.expenseMeta
+  if (data.refundMeta && typeof data.refundMeta === 'object') d.refundMeta = data.refundMeta
   return d
 }
 

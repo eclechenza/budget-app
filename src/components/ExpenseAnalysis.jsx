@@ -141,11 +141,17 @@ export default function ExpenseAnalysis({ state }) {
   // На пай-чарт и в легенду попадают только категории с положительным чистым расходом
   const items = allItems.filter((it) => it.netKZT > 0).sort((a, b) => b.netKZT - a.netKZT)
 
+  const catColorIndex = useMemo(() => {
+    const map = {}
+    cats.forEach((cat, i) => { map[cat] = i })
+    return map
+  }, [cats])
+
   const chartData = {
     labels: items.map((it) => it.cat),
     datasets: [{
       data: items.map((it) => Math.round(it.netKZT)),
-      backgroundColor: items.map((_, i) => PALETTE[i % PALETTE.length]),
+      backgroundColor: items.map((it) => PALETTE[catColorIndex[it.cat] % PALETTE.length]),
       borderWidth: 0,
       hoverOffset: 6,
     }],
@@ -220,12 +226,12 @@ export default function ExpenseAnalysis({ state }) {
                 <Pie data={chartData} options={options} />
               </div>
               <div className="expense-legend">
-                {items.map((it, i) => {
+                {items.map((it) => {
                   const pct       = totalKZT > 0 ? Math.round((it.netKZT / totalKZT) * 100) : 0
                   const incomePct = totalIncome > 0 ? Math.round((it.netDisplay / totalIncome) * 100) : null
                   return (
                     <div key={it.cat} className="expense-legend-row">
-                      <span className="expense-legend-dot" style={{ background: PALETTE[i % PALETTE.length] }} />
+                      <span className="expense-legend-dot" style={{ background: PALETTE[catColorIndex[it.cat] % PALETTE.length] }} />
                       <span className="expense-legend-name">{it.cat}</span>
                       <span className="expense-legend-amount">{fmt(Math.round(it.netDisplay))} {sym(it.nativeCur)}</span>
                       <span className="expense-legend-pct">{pct}%</span>

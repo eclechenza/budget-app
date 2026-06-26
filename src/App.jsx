@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { loadState, saveState } from './utils/storage'
+import { syncToGist } from './utils/gistSync'
 import Overview        from './components/Overview'
 import Assets          from './components/Assets'
 import FinancialRoute  from './components/FinancialRoute'
@@ -25,10 +26,11 @@ export default function App() {
   function updateState(next) {
     setState(next)
     saveState(next)
+    syncToGist(next).catch(() => {})
   }
 
-  function handleSaveEntry(monthKey, balances, income, expenses, note, refunds, closed) {
-    updateState({ ...state, entries: { ...state.entries, [monthKey]: { balances, income, expenses, note, refunds, closed } } })
+  function handleSaveEntry(monthKey, balances, income, expenses, note, refunds, closed, hiddenAccounts, hiddenSources, hiddenExpenses, hiddenRefunds) {
+    updateState({ ...state, entries: { ...state.entries, [monthKey]: { balances, income, expenses, note, refunds, closed, hiddenAccounts: hiddenAccounts || [], hiddenSources: hiddenSources || [], hiddenExpenses: hiddenExpenses || [], hiddenRefunds: hiddenRefunds || [] } } })
   }
 
   function renameKeys(obj, map) {
@@ -52,7 +54,7 @@ export default function App() {
     window.location.reload()
   }
 
-  function handleSaveSettings({ accounts, accountCur, accountType, accountMeta, archivedAccounts, sources, sourceCur, sourceType, archivedSources, expenseCategories, expenseCur, archivedExpenses, refundCategories, refundCur, archivedRefunds, refundMapping, renames = {} }) {
+  function handleSaveSettings({ accounts, accountCur, accountType, accountMeta, archivedAccounts, sources, sourceCur, sourceType, archivedSources, sourceMeta, expenseCategories, expenseCur, archivedExpenses, expenseMeta, refundCategories, refundCur, archivedRefunds, refundMeta, refundMapping, renames = {} }) {
     const newEntries = Object.fromEntries(
       Object.entries(state.entries).map(([mk, entry]) => [mk, {
         ...entry,
@@ -74,7 +76,7 @@ export default function App() {
         if (newRefundMapping[rcat] === oldName) newRefundMapping[rcat] = newName
       }
     }
-    updateState({ ...state, accounts, accountCur, accountType, accountMeta: accountMeta ?? state.accountMeta ?? {}, archivedAccounts: archivedAccounts ?? state.archivedAccounts ?? [], sources, sourceCur, sourceType, archivedSources: archivedSources ?? state.archivedSources ?? [], expenseCategories, expenseCur, archivedExpenses: archivedExpenses ?? state.archivedExpenses ?? [], refundCategories, refundCur, archivedRefunds: archivedRefunds ?? state.archivedRefunds ?? [], refundMapping: newRefundMapping, entries: newEntries })
+    updateState({ ...state, accounts, accountCur, accountType, accountMeta: accountMeta ?? state.accountMeta ?? {}, archivedAccounts: archivedAccounts ?? state.archivedAccounts ?? [], sources, sourceCur, sourceType, archivedSources: archivedSources ?? state.archivedSources ?? [], sourceMeta: sourceMeta ?? state.sourceMeta ?? {}, expenseCategories, expenseCur, archivedExpenses: archivedExpenses ?? state.archivedExpenses ?? [], expenseMeta: expenseMeta ?? state.expenseMeta ?? {}, refundCategories, refundCur, archivedRefunds: archivedRefunds ?? state.archivedRefunds ?? [], refundMeta: refundMeta ?? state.refundMeta ?? {}, refundMapping: newRefundMapping, entries: newEntries })
   }
 
   function handleTabClick(t) {
@@ -108,6 +110,7 @@ export default function App() {
             </button>
           )
         })}
+        {import.meta.env.DEV && <span className="sidebar-dev-badge">DEV</span>}
       </nav>
 
       <div className="content">

@@ -61,18 +61,32 @@ export function getMonthlyData(state) {
     const prev = i > 0 ? state.entries[months[i - 1]] : null
     const { year, month } = monthFromKey(mk)
     const rates = getRatesForMonth(year, month, ratesStore)
-    const expenses      = sumExpensesByCur(e.expenses || {}, state)
-    const refunds       = sumRefundsByCur(e.refunds  || {}, state)
-    const mappedRefunds = sumRefundsByCur(e.refunds  || {}, { ...state, refundCategories: mappedRefundCats })
 
-    // Per-category net expenses: expense − mapped_refunds converted to expense currency.
-    // Не обрезаем по 0 — если возврат за месяц больше расхода по категории, разница
-    // должна уменьшать общую сумму чистых расходов (а не «теряться»).
+    const hiddenAccounts = e.hiddenAccounts || []
+    const hiddenSources  = e.hiddenSources  || []
+    const hiddenExpenses = e.hiddenExpenses || []
+    const hiddenRefunds  = e.hiddenRefunds  || []
+
+    const visibleAccounts       = state.accounts.filter(a => !hiddenAccounts.includes(a))
+    const visibleSources        = state.sources.filter(s => !hiddenSources.includes(s))
+    const visiblePermanent      = permanentSources.filter(s => !hiddenSources.includes(s))
+    const visibleExpCats        = (state.expenseCategories || []).filter(c => !hiddenExpenses.includes(c))
+    const visibleRefCats        = (state.refundCategories  || []).filter(c => !hiddenRefunds.includes(c))
+    const visibleMappedRefCats  = mappedRefundCats.filter(rc => !hiddenRefunds.includes(rc))
+
+    const visStateForExp = { ...state, expenseCategories: visibleExpCats }
+    const visStateForRef = { ...state, refundCategories: visibleRefCats }
+    const visStateForMappedRef = { ...state, refundCategories: visibleMappedRefCats }
+
+    const expenses      = sumExpensesByCur(e.expenses || {}, visStateForExp)
+    const refunds       = sumRefundsByCur(e.refunds  || {}, visStateForRef)
+    const mappedRefunds = sumRefundsByCur(e.refunds  || {}, visStateForMappedRef)
+
     const netExpensesMapped = { KZT: 0, RUB: 0, USD: 0 }
-    ;(state.expenseCategories || []).forEach((cat) => {
+    visibleExpCats.forEach((cat) => {
       const expCur = (state.expenseCur || {})[cat] || 'KZT'
       const expVal = +(e.expenses || {})[cat] || 0
-      const refVal = (state.refundCategories || [])
+      const refVal = visibleRefCats
         .filter((rc) => refundMapping[rc] === cat)
         .reduce((sum, rc) => {
           const refCur = (state.refundCur || {})[rc] || 'KZT'
@@ -87,16 +101,16 @@ export function getMonthlyData(state) {
       label: monthLabel(mk),
       shortLabel: monthLabel(mk).split(' ')[0],
       rates,
-      balances:         sumByCur(e.balances || {}, state.accounts,    'account', state),
-      income:           sumByCur(e.income   || {}, state.sources,     'source',  state),
-      permanentIncome:  sumByCur(e.income   || {}, permanentSources,  'source',  state),
+      balances:         sumByCur(e.balances || {}, visibleAccounts,  'account', state),
+      income:           sumByCur(e.income   || {}, visibleSources,   'source',  state),
+      permanentIncome:  sumByCur(e.income   || {}, visiblePermanent, 'source',  state),
       expenses,
       refunds,
       mappedRefunds,
       netExpensesMapped,
       netExpenses:  netExpensesByCur(expenses, refunds),
       prevBalances: prev
-        ? sumByCur(prev.balances || {}, state.accounts, 'account', state)
+        ? sumByCur(prev.balances || {}, state.accounts.filter(a => !(prev.hiddenAccounts || []).includes(a)), 'account', state)
         : null,
     }
   })

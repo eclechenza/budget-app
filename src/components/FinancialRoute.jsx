@@ -458,6 +458,49 @@ export default function FinancialRoute({ state }) {
         </div>
       </div>
 
+      {/* График */}
+      <div className="card">
+        {goalsWithReach.map((g, i) => (
+          <div key={g.id} style={{ marginBottom: 6, fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ display: 'inline-block', width: 20, height: 2, background: GOAL_COLORS[i % GOAL_COLORS.length], flexShrink: 0, borderRadius: 1 }} />
+            {g.reachedIdx >= 0
+              ? <span>
+                  <span className="muted">{g.name}</span>
+                  {' '}<span className="muted" style={{ fontSize: 11 }}>({fmt(g.amount)}&nbsp;{sym(g.currency)})</span>
+                  {' '}— достигается в <strong className="pos">{labels[g.reachedIdx]}</strong>
+                </span>
+              : <span className="muted">
+                  {g.name}
+                  {' '}<span style={{ fontSize: 11 }}>({fmt(g.amount)}&nbsp;{sym(g.currency)})</span>
+                  {' '}— не достигается за выбранный период
+                </span>
+            }
+          </div>
+        ))}
+        {goalsWithReach.length > 0 && <div style={{ marginBottom: 10 }} />}
+
+        <div style={{ position: 'relative', height: 240 }}>
+          <Line data={{ labels, datasets }} options={chartOptions} />
+        </div>
+
+        {(expenseIdxs.size > 0 || savingsIdxs.size > 0) && (
+          <div style={{ marginTop: 8, display: 'flex', flexWrap: 'wrap', gap: '6px 16px' }}>
+            {expenseIdxs.size > 0 && (
+              <div style={{ fontSize: 11, color: '#999', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: '#D85A30', flexShrink: 0 }} />
+                Месяцы с запланированными тратами
+              </div>
+            )}
+            {savingsIdxs.size > 0 && (
+              <div style={{ fontSize: 11, color: '#999', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: '#1D9E75', flexShrink: 0 }} />
+                Месяцы с единоразовыми сбережениями
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
       {/* Параметры */}
       <div className="card">
         {mode === 'split' ? (
@@ -583,49 +626,6 @@ export default function FinancialRoute({ state }) {
             <button className="btn-ghost btn-ghost btn-ghost--muted" onClick={handleResetParams}>Сбросить</button>
           </div>
         </div>
-      </div>
-
-      {/* График */}
-      <div className="card">
-        {goalsWithReach.map((g, i) => (
-          <div key={g.id} style={{ marginBottom: 6, fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ display: 'inline-block', width: 20, height: 2, background: GOAL_COLORS[i % GOAL_COLORS.length], flexShrink: 0, borderRadius: 1 }} />
-            {g.reachedIdx >= 0
-              ? <span>
-                  <span className="muted">{g.name}</span>
-                  {' '}<span className="muted" style={{ fontSize: 11 }}>({fmt(g.amount)}&nbsp;{sym(g.currency)})</span>
-                  {' '}— достигается в <strong className="pos">{labels[g.reachedIdx]}</strong>
-                </span>
-              : <span className="muted">
-                  {g.name}
-                  {' '}<span style={{ fontSize: 11 }}>({fmt(g.amount)}&nbsp;{sym(g.currency)})</span>
-                  {' '}— не достигается за выбранный период
-                </span>
-            }
-          </div>
-        ))}
-        {goalsWithReach.length > 0 && <div style={{ marginBottom: 10 }} />}
-
-        <div style={{ position: 'relative', height: 240 }}>
-          <Line data={{ labels, datasets }} options={chartOptions} />
-        </div>
-
-        {(expenseIdxs.size > 0 || savingsIdxs.size > 0) && (
-          <div style={{ marginTop: 8, display: 'flex', flexWrap: 'wrap', gap: '6px 16px' }}>
-            {expenseIdxs.size > 0 && (
-              <div style={{ fontSize: 11, color: '#999', display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: '#D85A30', flexShrink: 0 }} />
-                Месяцы с запланированными тратами
-              </div>
-            )}
-            {savingsIdxs.size > 0 && (
-              <div style={{ fontSize: 11, color: '#999', display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: '#1D9E75', flexShrink: 0 }} />
-                Месяцы с единоразовыми сбережениями
-              </div>
-            )}
-          </div>
-        )}
       </div>
 
       {/* Метрики */}

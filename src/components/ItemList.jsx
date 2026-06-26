@@ -5,7 +5,7 @@ export const ACCOUNT_TYPES = ['Карта', 'Вклад', 'Инвестиция'
 export const ASSET_TYPES = new Set(['Вклад', 'Инвестиция'])
 export const SOURCE_TYPES = ['Постоянный', 'Переменный', 'Проценты']
 
-export default function ItemList({ items, curMap, onChange, onAdd, label, typeMap, onTypeChange, types, defaultType, onRename, onArchive, metaMap, onMetaChange }) {
+export default function ItemList({ items, curMap, onChange, onAdd, label, typeMap, onTypeChange, types, defaultType, onRename, onArchive, onHide, metaMap, onMetaChange }) {
   const dragIndex = useRef(null)
   const [dragOver, setDragOver] = useState(null)
 
@@ -162,6 +162,14 @@ export default function ItemList({ items, curMap, onChange, onAdd, label, typeMa
                   </>
                 )}
               </div>
+            )}
+            {onHide && (
+              <button className="btn-icon btn-icon--box" title="Скрыть в этом месяце" onClick={() => onHide(name)}>
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M1 8C2.5 4.5 5 3 8 3s5.5 1.5 7 5c-1.5 3.5-4 5-7 5S2.5 11.5 1 8z"/>
+                  <circle cx="8" cy="8" r="2" fill="currentColor" stroke="none"/>
+                </svg>
+              </button>
             )}
             {onArchive
               ? (

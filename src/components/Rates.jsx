@@ -23,9 +23,9 @@ ChartJS.register(CategoryScale, LinearScale, LineElement, PointElement, Tooltip,
 
 // ─── Конфиг пар ────────────────────────────────────────────────────────────
 const PAIRS = [
-  { id: 'RUB_KZT', title: 'Рубль к тенге',  unit: '₸', fromUnit: '₽', toUnit: '₸', precision: 3, color: CUR_COLORS.KZT, get: (r) => r.rub_kzt },
-  { id: 'USD_KZT', title: 'Доллар к тенге', unit: '₸', fromUnit: '$',  toUnit: '₸', precision: 2, color: CUR_COLORS.USD, get: (r) => r.usd_kzt },
-  { id: 'USD_RUB', title: 'Доллар к рублю', unit: '₽', fromUnit: '$',  toUnit: '₽', precision: 2, color: CUR_COLORS.RUB, get: (r) => r.usd_rub },
+  { id: 'RUB_KZT', title: 'Рубль к тенге',  flags: '🇷🇺🇰🇿', unit: '₸', fromUnit: '₽', toUnit: '₸', precision: 3, color: CUR_COLORS.KZT, get: (r) => r.rub_kzt },
+  { id: 'USD_KZT', title: 'Доллар к тенге', flags: '🇺🇸🇰🇿', unit: '₸', fromUnit: '$',  toUnit: '₸', precision: 2, color: CUR_COLORS.USD, get: (r) => r.usd_kzt },
+  { id: 'USD_RUB', title: 'Доллар к рублю', flags: '🇺🇸🇷🇺', unit: '₽', fromUnit: '$',  toUnit: '₽', precision: 2, color: CUR_COLORS.RUB, get: (r) => r.usd_rub },
 ]
 
 const PERIODS = [
@@ -231,9 +231,11 @@ export default function Rates({ state }) {
 
   return (
     <>
-      {PAIRS.map((pair) => (
-        <RateBlock key={pair.id} pair={pair} seriesByPeriod={seriesByPeriod} latest={latest} />
-      ))}
+      <div className="rates-list">
+        {PAIRS.map((pair) => (
+          <RateBlock key={pair.id} pair={pair} seriesByPeriod={seriesByPeriod} latest={latest} />
+        ))}
+      </div>
       <FixedRatesTable state={state} storeVersion={storeVersion} />
     </>
   )
@@ -261,11 +263,11 @@ function fmtResult(num, precision) {
 
 // ─── Блок одной пары ───────────────────────────────────────────────────────
 function RateBlock({ pair, seriesByPeriod, latest }) {
-  const [periodId, setPeriodId] = useState('1y')
+  const [chartOpen, setChartOpen] = useState(false)
   const [amount, setAmount] = useState('')
   const [swapped, setSwapped] = useState(false)
 
-  const series = seriesByPeriod[periodId] || []
+  const series = seriesByPeriod['1y'] || []
 
   const values = useMemo(() => series.map(pair.get), [series, pair])
   const labels = useMemo(
@@ -277,16 +279,16 @@ function RateBlock({ pair, seriesByPeriod, latest }) {
 
   const latestSeries = seriesByPeriod['1m'] || []
   const fallback = latestSeries.length ? pair.get(latestSeries[latestSeries.length - 1]) : null
-  // Единый курс для отображения и конвертера: берём из latest (актуальный),
-  // округляем до precision — чтобы показанный курс и расчёт были идентичны.
   const rawCurrent = latest ? pair.get(latest) : fallback
   const current = rawCurrent != null
     ? parseFloat(rawCurrent.toFixed(pair.precision))
     : null
 
-  const first = values.length ? values[0] : null
-  const periodCurrent = values.length ? values[values.length - 1] : null
-  const change = first != null && periodCurrent != null ? periodCurrent - first : 0
+  const yearSeries = seriesByPeriod['1y'] || []
+  const yearValues = useMemo(() => yearSeries.map(pair.get), [yearSeries, pair])
+  const first = yearValues.length ? yearValues[0] : null
+  const yearCurrent = yearValues.length ? yearValues[yearValues.length - 1] : null
+  const change = first != null && yearCurrent != null ? yearCurrent - first : 0
   const changePct = first ? (change / first) * 100 : 0
   const changeClass = change > 0 ? 'pos' : change < 0 ? 'neg' : ''
   const changeSign = change > 0 ? '+' : ''
@@ -340,42 +342,28 @@ function RateBlock({ pair, seriesByPeriod, latest }) {
   }
 
   return (
-    <div className="card">
-      <div className="rate-header">
-        <div className="rate-title">{pair.title}</div>
-        <div className="chips">
-          {PERIODS.map((p) => (
-            <button
-              key={p.id}
-              className={`chip${periodId === p.id ? ' active' : ''}`}
-              onClick={() => setPeriodId(p.id)}
-            >
-              {p.label}
-            </button>
-          ))}
+    <div className="rate-row card">
+      <div className="rate-row-main">
+        <div className="rate-row-info">
+          <span className="rate-row-flags">{pair.flags}</span>
+          <span className="rate-row-name">{pair.title}</span>
         </div>
-      </div>
 
-      <div className="rate-current-row">
-        <div className="rate-current-left">
-          <div className="rate-current">
-            {fmtRate(current, pair.precision)} <span className="rate-unit">{pair.unit}</span>
-          </div>
-          {first && (
-            <div className={`rate-change ${changeClass}`}>
-              {changeSign}{fmtRate(change, pair.precision)} ({changeSign}{changePct.toFixed(2)}%)
-            </div>
-          )}
+        <div className="rate-row-value">
+          <span className="rate-big">
+            {fmtRate(current, pair.precision)}&nbsp;<span className="rate-unit">{pair.unit}</span>
+          </span>
         </div>
+
         <div className="rate-converter">
           <div className="inp-wrap">
             <input
+              className="field-input"
               type="text"
               inputMode="decimal"
               placeholder="0"
               value={fmtThousands(amount)}
               onChange={handleAmountChange}
-              style={{ width: 90 }}
             />
             <span className="inp-cur">{fromUnit}</span>
           </div>
@@ -392,21 +380,35 @@ function RateBlock({ pair, seriesByPeriod, latest }) {
           </button>
           <div className="inp-wrap">
             <input
-              className="rate-conv-result"
+              className="field-input rate-conv-result"
               type="text"
               readOnly
               placeholder="0"
               value={fmtResult(resultNum, pair.precision)}
-              style={{ width: 90 }}
             />
             <span className="inp-cur">{toUnit}</span>
           </div>
         </div>
+
+        <button
+          type="button"
+          className={`rate-chart-btn${chartOpen ? ' active' : ''}`}
+          onClick={() => setChartOpen((o) => !o)}
+          title="График"
+        >
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <polyline points="1,13 5,8 8,10 12,4 17,6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+          </svg>
+        </button>
       </div>
 
-      <div style={{ position: 'relative', height: 200 }}>
-        <Line data={data} options={options} />
-      </div>
+      {chartOpen && (
+        <div className="rate-row-chart">
+          <div style={{ position: 'relative', height: 200 }}>
+            <Line data={data} options={options} />
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -417,13 +419,17 @@ function FixedRatesTable({ state, storeVersion }) {
   const months = useMemo(() => listStoredMonths(store).sort().reverse(), [store])
   const closed = useMemo(() => (state ? closedMonths(state) : []), [state])
   const usage = useMemo(() => getUsageMap(closed, store), [closed, store])
+  const [open, setOpen] = useState(false)
 
   if (!months.length) return null
 
   return (
     <div className="card">
-      <div className="section-title">Зафиксированные курсы</div>
-      <div style={{ overflowX: 'auto' }}>
+      <div className="section-title-row" onClick={() => setOpen((v) => !v)} style={{ cursor: 'pointer' }}>
+        <div className="section-title">Зафиксированные курсы</div>
+        <span className="expand-chevron">{open ? '▲' : '▼'}</span>
+      </div>
+      {open && <div style={{ overflowX: 'auto' }}>
         <table className="rates-fixed-table">
           <thead>
             <tr>
@@ -460,7 +466,7 @@ function FixedRatesTable({ state, storeVersion }) {
             })}
           </tbody>
         </table>
-      </div>
+      </div>}
     </div>
   )
 }

@@ -2,6 +2,13 @@ import { useState, useRef, useEffect } from 'react'
 import { curOf, genMonths, sym } from '../utils/storage'
 import ItemList, { ACCOUNT_TYPES, ASSET_TYPES, SOURCE_TYPES } from './ItemList'
 
+function defaultHidden(items, metaMap, monthKey) {
+  return items.filter(name => {
+    const created = (metaMap || {})[name]?.createdAt
+    return created && created > monthKey
+  })
+}
+
 function fmtInput(val) {
   if (val === '' || val == null) return ''
   const s = String(val)
@@ -34,6 +41,19 @@ function ArchiveList({ items, onRestore, onDelete }) {
   ))
 }
 
+function HiddenList({ items, onShow, onArchive }) {
+  if (items.length === 0) return <span className="muted small">Нет скрытых</span>
+  return items.map((name) => (
+    <div className="acc-edit-archive-row" key={name}>
+      <span className="acc-edit-archive-name">{name}</span>
+      <div style={{ display: 'flex', gap: 6 }}>
+        <button className="restore-btn" onClick={() => onShow(name)}>Показать</button>
+        {onArchive && <button className="restore-btn restore-btn--danger" onClick={() => onArchive(name)}>В архив</button>}
+      </div>
+    </div>
+  ))
+}
+
 // Reusable section delete modal
 function DeleteModal({ name, label, onCancel, onConfirm }) {
   return (
@@ -52,17 +72,58 @@ function DeleteModal({ name, label, onCancel, onConfirm }) {
   )
 }
 
+function prevMonthKey(mk) {
+  const [y, m] = mk.split('-').map(Number)
+  const d = new Date(y, m - 2, 1)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+}
+
+function initHidden(entry, monthKey, state) {
+  if (entry.hiddenAccounts !== undefined) {
+    return {
+      accounts: entry.hiddenAccounts,
+      sources:  entry.hiddenSources  || [],
+      expenses: entry.hiddenExpenses || [],
+      refunds:  entry.hiddenRefunds  || [],
+    }
+  }
+  const prev = state.entries[prevMonthKey(monthKey)] || {}
+  const fromPrev = {
+    accounts: prev.hiddenAccounts || [],
+    sources:  prev.hiddenSources  || [],
+    expenses: prev.hiddenExpenses || [],
+    refunds:  prev.hiddenRefunds  || [],
+  }
+  const fromCreated = {
+    accounts: defaultHidden(state.accounts,                   state.accountMeta, monthKey),
+    sources:  defaultHidden(state.sources,                    state.sourceMeta,  monthKey),
+    expenses: defaultHidden(state.expenseCategories || [],    state.expenseMeta, monthKey),
+    refunds:  defaultHidden(state.refundCategories  || [],    state.refundMeta,  monthKey),
+  }
+  return {
+    accounts: [...new Set([...fromPrev.accounts, ...fromCreated.accounts])],
+    sources:  [...new Set([...fromPrev.sources,  ...fromCreated.sources])],
+    expenses: [...new Set([...fromPrev.expenses, ...fromCreated.expenses])],
+    refunds:  [...new Set([...fromPrev.refunds,  ...fromCreated.refunds])],
+  }
+}
+
 export default function Entry({ state, onSave, onSaveSettings }) {
   const months = genMonths(24, 1)
   const [selectedMonth, setSelectedMonth] = useState(months[1].k)
 
   const _initial = state.entries[months[1].k] || {}
+  const _initHidden = initHidden(_initial, months[1].k, state)
   const [balances, setBalances] = useState(_initial.balances || {})
   const [income, setIncome] = useState(_initial.income   || {})
   const [expenses, setExpenses] = useState(_initial.expenses || {})
   const [refunds, setRefunds] = useState(_initial.refunds  || {})
   const [note, setNote] = useState(_initial.note || '')
   const [closed, setClosed] = useState(_initial.closed || false)
+  const [hiddenAccounts, setHiddenAccounts] = useState(_initHidden.accounts)
+  const [hiddenSources,  setHiddenSources]  = useState(_initHidden.sources)
+  const [hiddenExpenses, setHiddenExpenses] = useState(_initHidden.expenses)
+  const [hiddenRefunds,  setHiddenRefunds]  = useState(_initHidden.refunds)
   const [toast, setToast] = useState(false)
   const toastTimer = useRef(null)
   const saveTimer = useRef(null)
@@ -74,7 +135,7 @@ export default function Entry({ state, onSave, onSaveSettings }) {
     if (isMonthSwitch.current) { isMonthSwitch.current = false; return }
     clearTimeout(saveTimer.current)
     saveTimer.current = setTimeout(() => {
-      onSave(selectedMonth, balances, income, expenses, note, refunds, closed)
+      onSave(selectedMonth, balances, income, expenses, note, refunds, closed, hiddenAccounts, hiddenSources, hiddenExpenses, hiddenRefunds)
       setToast(true)
       clearTimeout(toastTimer.current)
       toastTimer.current = setTimeout(() => setToast(false), 2500)
@@ -91,6 +152,7 @@ export default function Entry({ state, onSave, onSaveSettings }) {
   const [editAccountType, setEditAccountType] = useState({})
   const [editAccountMeta, setEditAccountMeta] = useState({})
   const [editAccountRenames, setEditAccountRenames] = useState({})
+  const [editHiddenAccounts, setEditHiddenAccounts] = useState([])
   const [deleteAccountName, setDeleteAccountName] = useState(null)
 
   function startEditAccounts() {
@@ -100,6 +162,7 @@ export default function Entry({ state, onSave, onSaveSettings }) {
     setEditAccountType({ ...(state.accountType || {}) })
     setEditAccountMeta({ ...(state.accountMeta || {}) })
     setEditAccountRenames({})
+    setEditHiddenAccounts([...hiddenAccounts])
     setAccountsTab('active')
     setEditingAccounts(true)
   }
@@ -137,6 +200,7 @@ export default function Entry({ state, onSave, onSaveSettings }) {
     setEditAccounts([...editAccounts, n])
     setEditAccountCur({ ...editAccountCur, [n]: 'KZT' })
     setEditAccountType({ ...editAccountType, [n]: 'Карта' })
+    setEditAccountMeta({ ...editAccountMeta, [n]: { createdAt: selectedMonth } })
   }
   function saveEditAccounts() {
     const newBalances = { ...balances }
@@ -144,12 +208,14 @@ export default function Entry({ state, onSave, onSaveSettings }) {
       if (oldName in newBalances) { newBalances[newName] = newBalances[oldName]; delete newBalances[oldName] }
     }
     setBalances(newBalances)
+    setHiddenAccounts(editHiddenAccounts)
+    onSave(selectedMonth, newBalances, income, expenses, note, refunds, closed, editHiddenAccounts, hiddenSources, hiddenExpenses, hiddenRefunds)
     onSaveSettings({
       accounts: editAccounts, accountCur: editAccountCur, accountType: editAccountType, accountMeta: editAccountMeta,
       archivedAccounts: editArchivedAccounts,
-      sources: state.sources, sourceCur: state.sourceCur, sourceType: state.sourceType || {},
-      expenseCategories: state.expenseCategories || [], expenseCur: state.expenseCur || {},
-      refundCategories: state.refundCategories || [], refundCur: state.refundCur || {},
+      sources: state.sources, sourceCur: state.sourceCur, sourceType: state.sourceType || {}, sourceMeta: state.sourceMeta || {},
+      expenseCategories: state.expenseCategories || [], expenseCur: state.expenseCur || {}, expenseMeta: state.expenseMeta || {},
+      refundCategories: state.refundCategories || [], refundCur: state.refundCur || {}, refundMeta: state.refundMeta || {},
       refundMapping: state.refundMapping || {},
       renames: { accounts: editAccountRenames, sources: {}, expenses: {}, refunds: {} },
     })
@@ -164,6 +230,7 @@ export default function Entry({ state, onSave, onSaveSettings }) {
   const [editSourceCur, setEditSourceCur] = useState({})
   const [editSourceType, setEditSourceType] = useState({})
   const [editSourceRenames, setEditSourceRenames] = useState({})
+  const [editHiddenSources, setEditHiddenSources] = useState([])
   const [deleteSourceName, setDeleteSourceName] = useState(null)
 
   function startEditSources() {
@@ -172,6 +239,7 @@ export default function Entry({ state, onSave, onSaveSettings }) {
     setEditSourceCur({ ...state.sourceCur })
     setEditSourceType({ ...(state.sourceType || {}) })
     setEditSourceRenames({})
+    setEditHiddenSources([...hiddenSources])
     setSourcesTab('active')
     setEditingSources(true)
   }
@@ -209,6 +277,12 @@ export default function Entry({ state, onSave, onSaveSettings }) {
     setEditSources([...editSources, n])
     setEditSourceCur({ ...editSourceCur, [n]: 'KZT' })
     setEditSourceType({ ...editSourceType, [n]: 'Постоянный' })
+    const nextMeta = { ...(state.sourceMeta || {}), [n]: { createdAt: selectedMonth } }
+    onSaveSettings({ accounts: state.accounts, accountCur: state.accountCur, accountType: state.accountType || {}, accountMeta: state.accountMeta || {},
+      sources: [...editSources, n], sourceCur: { ...editSourceCur, [n]: 'KZT' }, sourceType: { ...editSourceType, [n]: 'Постоянный' }, sourceMeta: nextMeta,
+      expenseCategories: state.expenseCategories || [], expenseCur: state.expenseCur || {}, expenseMeta: state.expenseMeta || {},
+      refundCategories: state.refundCategories || [], refundCur: state.refundCur || {}, refundMeta: state.refundMeta || {},
+      refundMapping: state.refundMapping || {}, renames: { accounts: {}, sources: {}, expenses: {}, refunds: {} } })
   }
   function saveEditSources() {
     const newIncome = { ...income }
@@ -216,12 +290,14 @@ export default function Entry({ state, onSave, onSaveSettings }) {
       if (oldName in newIncome) { newIncome[newName] = newIncome[oldName]; delete newIncome[oldName] }
     }
     setIncome(newIncome)
+    setHiddenSources(editHiddenSources)
+    onSave(selectedMonth, balances, newIncome, expenses, note, refunds, closed, hiddenAccounts, editHiddenSources, hiddenExpenses, hiddenRefunds)
     onSaveSettings({
-      accounts: state.accounts, accountCur: state.accountCur, accountType: state.accountType || {},
-      sources: editSources, sourceCur: editSourceCur, sourceType: editSourceType,
+      accounts: state.accounts, accountCur: state.accountCur, accountType: state.accountType || {}, accountMeta: state.accountMeta || {},
+      sources: editSources, sourceCur: editSourceCur, sourceType: editSourceType, sourceMeta: state.sourceMeta || {},
       archivedSources: editArchivedSources,
-      expenseCategories: state.expenseCategories || [], expenseCur: state.expenseCur || {},
-      refundCategories: state.refundCategories || [], refundCur: state.refundCur || {},
+      expenseCategories: state.expenseCategories || [], expenseCur: state.expenseCur || {}, expenseMeta: state.expenseMeta || {},
+      refundCategories: state.refundCategories || [], refundCur: state.refundCur || {}, refundMeta: state.refundMeta || {},
       refundMapping: state.refundMapping || {},
       renames: { accounts: {}, sources: editSourceRenames, expenses: {}, refunds: {} },
     })
@@ -235,6 +311,7 @@ export default function Entry({ state, onSave, onSaveSettings }) {
   const [editArchivedExpenses, setEditArchivedExpenses] = useState([])
   const [editExpenseCur, setEditExpenseCur] = useState({})
   const [editExpenseRenames, setEditExpenseRenames] = useState({})
+  const [editHiddenExpenses, setEditHiddenExpenses] = useState([])
   const [deleteExpenseName, setDeleteExpenseName] = useState(null)
 
   function startEditExpenses() {
@@ -242,6 +319,7 @@ export default function Entry({ state, onSave, onSaveSettings }) {
     setEditArchivedExpenses([...(state.archivedExpenses || [])])
     setEditExpenseCur({ ...(state.expenseCur || {}) })
     setEditExpenseRenames({})
+    setEditHiddenExpenses([...hiddenExpenses])
     setExpensesTab('active')
     setEditingExpenses(true)
   }
@@ -277,19 +355,24 @@ export default function Entry({ state, onSave, onSaveSettings }) {
     while (editExpenses.includes(n)) n = `Новый расход ${i++}`
     setEditExpenses([...editExpenses, n])
     setEditExpenseCur({ ...editExpenseCur, [n]: 'KZT' })
+    setEditHiddenExpenses(prev => prev) // new expense is visible by default
+    // save createdAt immediately via meta
   }
   function saveEditExpenses() {
     const newExpenses = { ...expenses }
     for (const [oldName, newName] of Object.entries(editExpenseRenames)) {
       if (oldName in newExpenses) { newExpenses[newName] = newExpenses[oldName]; delete newExpenses[oldName] }
     }
+    const newExpenseMeta = { ...(state.expenseMeta || {}) }
+    editExpenses.forEach(n => { if (!newExpenseMeta[n]) newExpenseMeta[n] = { createdAt: selectedMonth } })
     setExpenses(newExpenses)
+    setHiddenExpenses(editHiddenExpenses)
+    onSave(selectedMonth, balances, income, newExpenses, note, refunds, closed, hiddenAccounts, hiddenSources, editHiddenExpenses, hiddenRefunds)
     onSaveSettings({
-      accounts: state.accounts, accountCur: state.accountCur, accountType: state.accountType || {},
-      sources: state.sources, sourceCur: state.sourceCur, sourceType: state.sourceType || {},
-      expenseCategories: editExpenses, expenseCur: editExpenseCur,
-      archivedExpenses: editArchivedExpenses,
-      refundCategories: state.refundCategories || [], refundCur: state.refundCur || {},
+      accounts: state.accounts, accountCur: state.accountCur, accountType: state.accountType || {}, accountMeta: state.accountMeta || {},
+      sources: state.sources, sourceCur: state.sourceCur, sourceType: state.sourceType || {}, sourceMeta: state.sourceMeta || {},
+      expenseCategories: editExpenses, expenseCur: editExpenseCur, archivedExpenses: editArchivedExpenses, expenseMeta: newExpenseMeta,
+      refundCategories: state.refundCategories || [], refundCur: state.refundCur || {}, refundMeta: state.refundMeta || {},
       refundMapping: state.refundMapping || {},
       renames: { accounts: {}, sources: {}, expenses: editExpenseRenames, refunds: {} },
     })
@@ -304,6 +387,7 @@ export default function Entry({ state, onSave, onSaveSettings }) {
   const [editRefundCur, setEditRefundCur] = useState({})
   const [editRefundRenames, setEditRefundRenames] = useState({})
   const [editRefundMapping, setEditRefundMapping] = useState({})
+  const [editHiddenRefunds, setEditHiddenRefunds] = useState([])
   const [deleteRefundName, setDeleteRefundName] = useState(null)
 
   function startEditRefunds() {
@@ -312,6 +396,7 @@ export default function Entry({ state, onSave, onSaveSettings }) {
     setEditRefundCur({ ...(state.refundCur || {}) })
     setEditRefundRenames({})
     setEditRefundMapping({ ...(state.refundMapping || {}) })
+    setEditHiddenRefunds([...hiddenRefunds])
     setRefundsTab('active')
     setEditingRefunds(true)
   }
@@ -360,13 +445,16 @@ export default function Entry({ state, onSave, onSaveSettings }) {
     for (const [oldName, newName] of Object.entries(editRefundRenames)) {
       if (oldName in newRefunds) { newRefunds[newName] = newRefunds[oldName]; delete newRefunds[oldName] }
     }
+    const newRefundMeta = { ...(state.refundMeta || {}) }
+    editRefunds.forEach(n => { if (!newRefundMeta[n]) newRefundMeta[n] = { createdAt: selectedMonth } })
     setRefunds(newRefunds)
+    setHiddenRefunds(editHiddenRefunds)
+    onSave(selectedMonth, balances, income, expenses, note, newRefunds, closed, hiddenAccounts, hiddenSources, hiddenExpenses, editHiddenRefunds)
     onSaveSettings({
-      accounts: state.accounts, accountCur: state.accountCur, accountType: state.accountType || {},
-      sources: state.sources, sourceCur: state.sourceCur, sourceType: state.sourceType || {},
-      expenseCategories: state.expenseCategories || [], expenseCur: state.expenseCur || {},
-      refundCategories: editRefunds, refundCur: editRefundCur,
-      archivedRefunds: editArchivedRefunds,
+      accounts: state.accounts, accountCur: state.accountCur, accountType: state.accountType || {}, accountMeta: state.accountMeta || {},
+      sources: state.sources, sourceCur: state.sourceCur, sourceType: state.sourceType || {}, sourceMeta: state.sourceMeta || {},
+      expenseCategories: state.expenseCategories || [], expenseCur: state.expenseCur || {}, expenseMeta: state.expenseMeta || {},
+      refundCategories: editRefunds, refundCur: editRefundCur, archivedRefunds: editArchivedRefunds, refundMeta: newRefundMeta,
       refundMapping: editRefundMapping,
       renames: { accounts: {}, sources: {}, expenses: {}, refunds: editRefundRenames },
     })
@@ -384,10 +472,15 @@ export default function Entry({ state, onSave, onSaveSettings }) {
     setRefunds(ex.refunds || {})
     setNote(ex.note || '')
     setClosed(ex.closed || false)
+    const h = initHidden(ex, k, state)
+    setHiddenAccounts(h.accounts)
+    setHiddenSources(h.sources)
+    setHiddenExpenses(h.expenses)
+    setHiddenRefunds(h.refunds)
   }
 
   function handleSave() {
-    onSave(selectedMonth, balances, income, expenses, note, refunds, closed)
+    onSave(selectedMonth, balances, income, expenses, note, refunds, closed, hiddenAccounts, hiddenSources, hiddenExpenses, hiddenRefunds)
     setToast(true)
     clearTimeout(toastTimer.current)
     toastTimer.current = setTimeout(() => setToast(false), 2500)
@@ -408,7 +501,7 @@ export default function Entry({ state, onSave, onSaveSettings }) {
           <input type="checkbox" checked={closed} onChange={(e) => {
             const val = e.target.checked
             setClosed(val)
-            onSave(selectedMonth, balances, income, expenses, note, refunds, val)
+            onSave(selectedMonth, balances, income, expenses, note, refunds, val, hiddenAccounts, hiddenSources, hiddenExpenses, hiddenRefunds)
           }} />
           Месяц закрыт
         </label>
@@ -432,18 +525,22 @@ export default function Entry({ state, onSave, onSaveSettings }) {
           <>
             <div className="chips" style={{ marginBottom: 12 }}>
               <button className={`chip chip--sm${accountsTab === 'active' ? ' active' : ''}`} onClick={() => setAccountsTab('active')}>Активные</button>
+              <button className={`chip chip--sm${accountsTab === 'hidden' ? ' active' : ''}`} onClick={() => setAccountsTab('hidden')}>Скрытые</button>
               <button className={`chip chip--sm${accountsTab === 'archive' ? ' active' : ''}`} onClick={() => setAccountsTab('archive')}>Архив</button>
             </div>
             {accountsTab === 'active' ? (
               <ItemList
-                items={editAccounts} curMap={editAccountCur}
-                onChange={(a, c) => { setEditAccounts(a); setEditAccountCur(c) }}
+                items={editAccounts.filter(a => !editHiddenAccounts.includes(a))} curMap={editAccountCur}
+                onChange={(a, c) => { setEditAccounts([...editHiddenAccounts, ...a]); setEditAccountCur(c) }}
                 onAdd={addEditAccount} label="счёт"
                 typeMap={editAccountType} onTypeChange={setEditAccountType}
                 types={ACCOUNT_TYPES} defaultType="Карта"
                 onRename={trackEditRename} onArchive={archiveEditAccount}
+                onHide={name => setEditHiddenAccounts(prev => [...prev, name])}
                 metaMap={editAccountMeta} onMetaChange={setEditAccountMeta}
               />
+            ) : accountsTab === 'hidden' ? (
+              <HiddenList items={editHiddenAccounts} onShow={name => setEditHiddenAccounts(prev => prev.filter(a => a !== name))} onArchive={name => { setEditHiddenAccounts(prev => prev.filter(a => a !== name)); archiveEditAccount(name) }} />
             ) : (
               <ArchiveList items={editArchivedAccounts} onRestore={restoreEditAccount} onDelete={setDeleteAccountName} />
             )}
@@ -451,7 +548,7 @@ export default function Entry({ state, onSave, onSaveSettings }) {
         ) : (
           <table className="fields-table">
             <tbody>
-              {state.accounts.map((a) => {
+              {state.accounts.filter(a => !hiddenAccounts.includes(a)).map((a) => {
                 const c = curOf(a, 'account', state)
                 const isAsset = ASSET_TYPES.has((state.accountType || {})[a])
                 const meta = isAsset ? ((state.accountMeta || {})[a] || {}) : null
@@ -501,17 +598,21 @@ export default function Entry({ state, onSave, onSaveSettings }) {
           <>
             <div className="chips" style={{ marginBottom: 12 }}>
               <button className={`chip chip--sm${sourcesTab === 'active' ? ' active' : ''}`} onClick={() => setSourcesTab('active')}>Активные</button>
+              <button className={`chip chip--sm${sourcesTab === 'hidden' ? ' active' : ''}`} onClick={() => setSourcesTab('hidden')}>Скрытые</button>
               <button className={`chip chip--sm${sourcesTab === 'archive' ? ' active' : ''}`} onClick={() => setSourcesTab('archive')}>Архив</button>
             </div>
             {sourcesTab === 'active' ? (
               <ItemList
-                items={editSources} curMap={editSourceCur}
-                onChange={(s, c) => { setEditSources(s); setEditSourceCur(c) }}
+                items={editSources.filter(s => !editHiddenSources.includes(s))} curMap={editSourceCur}
+                onChange={(s, c) => { setEditSources([...editHiddenSources, ...s]); setEditSourceCur(c) }}
                 onAdd={addEditSource} label="источник"
                 typeMap={editSourceType} onTypeChange={setEditSourceType}
                 types={SOURCE_TYPES} defaultType="Постоянный"
                 onRename={trackEditSourceRename} onArchive={archiveEditSource}
+                onHide={name => setEditHiddenSources(prev => [...prev, name])}
               />
+            ) : sourcesTab === 'hidden' ? (
+              <HiddenList items={editHiddenSources} onShow={name => setEditHiddenSources(prev => prev.filter(s => s !== name))} onArchive={name => { setEditHiddenSources(prev => prev.filter(s => s !== name)); archiveEditSource(name) }} />
             ) : (
               <ArchiveList items={editArchivedSources} onRestore={restoreEditSource} onDelete={setDeleteSourceName} />
             )}
@@ -519,7 +620,7 @@ export default function Entry({ state, onSave, onSaveSettings }) {
         ) : (
           <table className="fields-table">
             <tbody>
-              {state.sources.map((s) => {
+              {state.sources.filter(s => !hiddenSources.includes(s)).map((s) => {
                 const c = curOf(s, 'source', state)
                 return (
                   <tr key={s}>
@@ -563,23 +664,27 @@ export default function Entry({ state, onSave, onSaveSettings }) {
           <>
             <div className="chips" style={{ marginBottom: 12 }}>
               <button className={`chip chip--sm${expensesTab === 'active' ? ' active' : ''}`} onClick={() => setExpensesTab('active')}>Активные</button>
+              <button className={`chip chip--sm${expensesTab === 'hidden' ? ' active' : ''}`} onClick={() => setExpensesTab('hidden')}>Скрытые</button>
               <button className={`chip chip--sm${expensesTab === 'archive' ? ' active' : ''}`} onClick={() => setExpensesTab('archive')}>Архив</button>
             </div>
             {expensesTab === 'active' ? (
               <ItemList
-                items={editExpenses} curMap={editExpenseCur}
-                onChange={(e, c) => { setEditExpenses(e); setEditExpenseCur(c) }}
+                items={editExpenses.filter(e => !editHiddenExpenses.includes(e))} curMap={editExpenseCur}
+                onChange={(e, c) => { setEditExpenses([...editHiddenExpenses, ...e]); setEditExpenseCur(c) }}
                 onAdd={addEditExpense} label="категорию"
                 onRename={trackEditExpenseRename} onArchive={archiveEditExpense}
+                onHide={name => setEditHiddenExpenses(prev => [...prev, name])}
               />
+            ) : expensesTab === 'hidden' ? (
+              <HiddenList items={editHiddenExpenses} onShow={name => setEditHiddenExpenses(prev => prev.filter(e => e !== name))} onArchive={name => { setEditHiddenExpenses(prev => prev.filter(e => e !== name)); archiveEditExpense(name) }} />
             ) : (
               <ArchiveList items={editArchivedExpenses} onRestore={restoreEditExpense} onDelete={setDeleteExpenseName} />
             )}
           </>
-        ) : expCats.length > 0 ? (
+        ) : expCats.filter(c => !hiddenExpenses.includes(c)).length > 0 ? (
           <table className="fields-table">
             <tbody>
-              {expCats.map((cat) => {
+              {expCats.filter(cat => !hiddenExpenses.includes(cat)).map((cat) => {
                 const c = (state.expenseCur || {})[cat] || 'KZT'
                 return (
                   <tr key={cat}>
@@ -621,20 +726,22 @@ export default function Entry({ state, onSave, onSaveSettings }) {
           <>
             <div className="chips" style={{ marginBottom: 12 }}>
               <button className={`chip chip--sm${refundsTab === 'active' ? ' active' : ''}`} onClick={() => setRefundsTab('active')}>Активные</button>
+              <button className={`chip chip--sm${refundsTab === 'hidden' ? ' active' : ''}`} onClick={() => setRefundsTab('hidden')}>Скрытые</button>
               <button className={`chip chip--sm${refundsTab === 'archive' ? ' active' : ''}`} onClick={() => setRefundsTab('archive')}>Архив</button>
             </div>
             {refundsTab === 'active' ? (
               <>
                 <ItemList
-                  items={editRefunds} curMap={editRefundCur}
-                  onChange={(r, c) => { setEditRefunds(r); setEditRefundCur(c) }}
+                  items={editRefunds.filter(r => !editHiddenRefunds.includes(r))} curMap={editRefundCur}
+                  onChange={(r, c) => { setEditRefunds([...editHiddenRefunds, ...r]); setEditRefundCur(c) }}
                   onAdd={addEditRefund} label="возврат"
                   onRename={trackEditRefundRename} onArchive={archiveEditRefund}
+                  onHide={name => setEditHiddenRefunds(prev => [...prev, name])}
                 />
-                {editRefunds.length > 0 && (state.expenseCategories || []).length > 0 && (
+                {editRefunds.filter(r => !editHiddenRefunds.includes(r)).length > 0 && (state.expenseCategories || []).length > 0 && (
                   <div style={{ marginTop: 12 }}>
                     <div className="section-title" style={{ fontSize: 14, marginBottom: 8 }}>Привязка к расходам</div>
-                    {editRefunds.map((rcat) => (
+                    {editRefunds.filter(r => !editHiddenRefunds.includes(r)).map((rcat) => (
                       <div className="settings-row" key={rcat}>
                         <span style={{ flex: 1, fontSize: '0.9rem' }}>{rcat}</span>
                         <span style={{ padding: '0 8px', color: 'var(--text-muted)' }}>→</span>
@@ -653,14 +760,16 @@ export default function Entry({ state, onSave, onSaveSettings }) {
                   </div>
                 )}
               </>
+            ) : refundsTab === 'hidden' ? (
+              <HiddenList items={editHiddenRefunds} onShow={name => setEditHiddenRefunds(prev => prev.filter(r => r !== name))} onArchive={name => { setEditHiddenRefunds(prev => prev.filter(r => r !== name)); archiveEditRefund(name) }} />
             ) : (
               <ArchiveList items={editArchivedRefunds} onRestore={restoreEditRefund} onDelete={setDeleteRefundName} />
             )}
           </>
-        ) : refCats.length > 0 ? (
+        ) : refCats.filter(c => !hiddenRefunds.includes(c)).length > 0 ? (
           <table className="fields-table">
             <tbody>
-              {refCats.map((cat) => {
+              {refCats.filter(cat => !hiddenRefunds.includes(cat)).map((cat) => {
                 const c = (state.refundCur || {})[cat] || 'KZT'
                 return (
                   <tr key={cat}>
