@@ -147,7 +147,7 @@ body {
   gap: 10px;
 }
 .sidebar button svg { flex-shrink: 0; }
-.sidebar button:hover { background: #ebebeb; }
+@media (hover: hover) { .sidebar button:hover { background: #ebebeb; } }
 .sidebar button.active {
   background: var(--text);
   color: #fff;
@@ -1047,7 +1047,7 @@ body {
 [data-theme="dark"] body                       { background: #111; color: #f0f0f0; }
 [data-theme="dark"] .sidebar                   { border-right-color: rgba(255,255,255,.08); background: #141414; }
 [data-theme="dark"] .sidebar button            { color: #f0f0f0; border-color: rgba(255,255,255,.15); }
-[data-theme="dark"] .sidebar button:hover      { background: #252525; }
+@media (hover: hover) { [data-theme="dark"] .sidebar button:hover { background: #252525; } }
 [data-theme="dark"] .sidebar button.active     { background: #f0f0f0; color: #111; border-color: #f0f0f0; }
 [data-theme="dark"] .card                      { background: #1c1c1c; border-color: rgba(255,255,255,.07); }
 [data-theme="dark"] .charts-grid .card         { background: #242424; }

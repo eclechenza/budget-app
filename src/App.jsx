@@ -129,6 +129,7 @@ export default function App() {
   function handleTabClick(t) {
     setTab(t)
     setDrawerOpen(false)
+    window.scrollTo(0, 0)
   }
 
   return (
