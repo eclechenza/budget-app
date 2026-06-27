@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, Fragment } from 'react'
 import { Line } from 'react-chartjs-2'
 import {
   Chart as ChartJS,
@@ -23,14 +23,14 @@ ChartJS.register(CategoryScale, LinearScale, LineElement, PointElement, Tooltip,
 
 // ─── Конфиг пар ────────────────────────────────────────────────────────────
 const PAIRS = [
-  { id: 'RUB_KZT', title: 'Рубль к тенге',  flags: '🇷🇺🇰🇿', unit: '₸', fromUnit: '₽', toUnit: '₸', precision: 3, color: CUR_COLORS.KZT, get: (r) => r.rub_kzt },
-  { id: 'USD_KZT', title: 'Доллар к тенге', flags: '🇺🇸🇰🇿', unit: '₸', fromUnit: '$',  toUnit: '₸', precision: 2, color: CUR_COLORS.USD, get: (r) => r.usd_kzt },
-  { id: 'USD_RUB', title: 'Доллар к рублю', flags: '🇺🇸🇷🇺', unit: '₽', fromUnit: '$',  toUnit: '₽', precision: 2, color: CUR_COLORS.RUB, get: (r) => r.usd_rub },
+  { id: 'RUB_KZT', symbols: '₽ → ₸', flags: '🇷🇺🇰🇿', unit: '₸', fromUnit: '₽', toUnit: '₸', precision: 3, color: CUR_COLORS.KZT, get: (r) => r.rub_kzt },
+  { id: 'USD_KZT', symbols: '$ → ₸',  flags: '🇺🇸🇰🇿', unit: '₸', fromUnit: '$',  toUnit: '₸', precision: 2, color: CUR_COLORS.USD, get: (r) => r.usd_kzt },
+  { id: 'USD_RUB', symbols: '$ → ₽',  flags: '🇺🇸🇷🇺', unit: '₽', fromUnit: '$',  toUnit: '₽', precision: 2, color: CUR_COLORS.RUB, get: (r) => r.usd_rub },
 ]
 
 const PERIODS = [
   { id: '1m', label: '1 месяц', days: 30,  step: 1  },
-  { id: '1y', label: '1 год',   days: 365, step: 15 },
+  { id: '1y', label: '12 месяцев', days: 365, step: 30 },
 ]
 
 // ─── Утилиты дат ───────────────────────────────────────────────────────────
@@ -79,9 +79,24 @@ async function fetchSeries(period) {
   return results.filter(Boolean)
 }
 
-// Текущий курс — отдельный запрос к `@latest`, минуя кеш CDN.
+// Текущий курс — сначала NBK (официальный KZT-курс), затем fawazahmed0 как запасной.
 // Используется ТОЛЬКО для отображения карточек на этой вкладке.
 async function fetchLatest() {
+  // 1. exchangerate-api.com — тот же источник что используется в расчётах приложения
+  const today = ymd(new Date())
+  try {
+    const res = await fetch('https://api.exchangerate-api.com/v4/latest/KZT', { cache: 'no-store' })
+    if (res.ok) {
+      const data = await res.json()
+      const rub_kzt = data.rates?.RUB ? 1 / data.rates.RUB : null
+      const usd_kzt = data.rates?.USD ? 1 / data.rates.USD : null
+      if (rub_kzt && usd_kzt) {
+        return { date: today, usd_kzt, rub_kzt, usd_rub: usd_kzt / rub_kzt }
+      }
+    }
+  } catch (e) {}
+
+  // 2. Fallback: fawazahmed0 CDN
   const bust = Date.now()
   const urls = [
     `https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json?_=${bust}`,
@@ -167,6 +182,7 @@ export default function Rates({ state }) {
   const [latest, setLatest] = useState(null)
   const [error, setError] = useState(false)
   const [storeVersion, setStoreVersion] = useState(0)
+  const [refreshing, setRefreshing] = useState(false)
 
   // Исторические серии для графиков — грузим один раз
   useEffect(() => {
@@ -229,8 +245,23 @@ export default function Rates({ state }) {
     return <p className="empty small">Загрузка курсов…</p>
   }
 
+  function handleRefresh() {
+    if (refreshing) return
+    setRefreshing(true)
+    fetchLatest().then((r) => {
+      if (r) setLatest(r)
+      setRefreshing(false)
+    }).catch(() => setRefreshing(false))
+  }
+
   return (
     <>
+      <div className="rates-toolbar">
+        <button className="rates-refresh-btn" onClick={handleRefresh} disabled={refreshing}>
+          {refreshing ? 'Обновление…' : 'Обновить'}
+        </button>
+      </div>
+      <CrossRateCalc />
       <div className="rates-list">
         {PAIRS.map((pair) => (
           <RateBlock key={pair.id} pair={pair} seriesByPeriod={seriesByPeriod} latest={latest} />
@@ -269,20 +300,39 @@ function RateBlock({ pair, seriesByPeriod, latest }) {
 
   const series = seriesByPeriod['1y'] || []
 
-  const values = useMemo(() => series.map(pair.get), [series, pair])
-  const labels = useMemo(
-    () => series.map((r) =>
-      new Date(r.date).toLocaleDateString('ru', { day: '2-digit', month: 'short' })
-    ),
-    [series]
-  )
-
   const latestSeries = seriesByPeriod['1m'] || []
   const fallback = latestSeries.length ? pair.get(latestSeries[latestSeries.length - 1]) : null
   const rawCurrent = latest ? pair.get(latest) : fallback
   const current = rawCurrent != null
     ? parseFloat(rawCurrent.toFixed(pair.precision))
     : null
+
+  const todayStr = ymd(new Date())
+  const todayLabel = new Date(todayStr).toLocaleDateString('ru', { day: '2-digit', month: 'short' })
+
+  const values = useMemo(() => {
+    const base = series.map(pair.get)
+    const lastDate = series.length ? series[series.length - 1].date : null
+    if (current != null && lastDate !== todayStr) base.push(current)
+    return base
+  }, [series, pair, current, todayStr])
+
+  const labels = useMemo(() => {
+    const base = series.map((r) => {
+      const d = new Date(r.date)
+      const mon = d.toLocaleDateString('ru', { month: 'short' })
+      const yr = String(d.getUTCFullYear()).slice(2)
+      return `${mon} '${yr}`
+    })
+    const lastDate = series.length ? series[series.length - 1].date : null
+    if (current != null && lastDate !== todayStr) {
+      const d = new Date(todayStr)
+      const mon = d.toLocaleDateString('ru', { month: 'short' })
+      const yr = String(d.getUTCFullYear()).slice(2)
+      base.push(`${mon} '${yr}`)
+    }
+    return base
+  }, [series, current, todayStr])
 
   const yearSeries = seriesByPeriod['1y'] || []
   const yearValues = useMemo(() => yearSeries.map(pair.get), [yearSeries, pair])
@@ -336,7 +386,7 @@ function RateBlock({ pair, seriesByPeriod, latest }) {
       },
     },
     scales: {
-      x: { ...xAxisOpts(), ticks: { ...xAxisOpts().ticks, maxTicksLimit: 6 } },
+      x: { ...xAxisOpts(), ticks: { ...xAxisOpts().ticks, maxTicksLimit: 14, includeBounds: true } },
       y: yAxisOpts((v) => fmtRate(v, pair.precision)),
     },
   }
@@ -344,15 +394,26 @@ function RateBlock({ pair, seriesByPeriod, latest }) {
   return (
     <div className="rate-row card">
       <div className="rate-row-main">
-        <div className="rate-row-info">
-          <span className="rate-row-flags">{pair.flags}</span>
-          <span className="rate-row-name">{pair.title}</span>
-        </div>
-
-        <div className="rate-row-value">
-          <span className="rate-big">
-            {fmtRate(current, pair.precision)}&nbsp;<span className="rate-unit">{pair.unit}</span>
-          </span>
+        <div className="rate-row-top">
+          <div className="rate-row-info">
+            <span className="rate-row-flags">{pair.flags}</span>
+            <span className="rate-row-symbols">{pair.symbols}</span>
+          </div>
+          <div className="rate-row-value">
+            <span className="rate-big">
+              {fmtRate(current, pair.precision)}&nbsp;<span className="rate-unit">{pair.unit}</span>
+            </span>
+          </div>
+          <button
+            type="button"
+            className={`rate-chart-btn${chartOpen ? ' active' : ''}`}
+            onClick={() => setChartOpen((o) => !o)}
+            title="График"
+          >
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <polyline points="1,13 5,8 8,10 12,4 17,6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+            </svg>
+          </button>
         </div>
 
         <div className="rate-converter">
@@ -389,17 +450,6 @@ function RateBlock({ pair, seriesByPeriod, latest }) {
             <span className="inp-cur">{toUnit}</span>
           </div>
         </div>
-
-        <button
-          type="button"
-          className={`rate-chart-btn${chartOpen ? ' active' : ''}`}
-          onClick={() => setChartOpen((o) => !o)}
-          title="График"
-        >
-          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <polyline points="1,13 5,8 8,10 12,4 17,6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-          </svg>
-        </button>
       </div>
 
       {chartOpen && (
@@ -409,6 +459,98 @@ function RateBlock({ pair, seriesByPeriod, latest }) {
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+// ─── Кросс-калькулятор ─────────────────────────────────────────────────────
+function CrossRateCalc() {
+  const [curs, setCurs] = useState(['RU', 'USDT', 'KZT', 'USD'])
+  const [rates, setRates] = useState(['', '', ''])
+
+  function addCur() {
+    setCurs((c) => [...c, ''])
+    setRates((r) => [...r, ''])
+  }
+
+  function delCur(i) {
+    if (curs.length <= 2) return
+    setCurs((c) => c.filter((_, idx) => idx !== i))
+    const ri = i === 0 ? 0 : i - 1
+    setRates((r) => r.filter((_, idx) => idx !== ri))
+  }
+
+  function setCurName(i, val) {
+    setCurs((c) => c.map((x, idx) => (idx === i ? val.toUpperCase() : x)))
+  }
+
+  function setRate(i, val) {
+    setRates((r) => r.map((x, idx) => (idx === i ? val.replace(/[^\d.,]/g, '').replace(',', '.') : x)))
+  }
+
+  const parsed = rates.map((r) => parseFloat(r))
+  const allValid = parsed.every((r) => r > 0)
+  const cross = allValid
+    ? parsed.reduce((acc, r, i) => i % 2 === 0 ? acc / r : acc * r, 1)
+    : null
+  const [flipped, setFlipped] = useState(false)
+  const displayVal = cross != null ? (flipped ? 1 / cross : cross) : null
+  const precision = displayVal == null ? 2 : displayVal < 1 ? 6 : displayVal < 10 ? 4 : 2
+  const fromLabel = flipped ? curs[curs.length - 1] : curs[0]
+  const toLabel = flipped ? curs[0] : curs[curs.length - 1]
+
+  return (
+    <div className="card cross-calc">
+      <div className="cross-calc-inner">
+        <div className="cross-chain-scroll">
+          <div className="cross-chain">
+            {curs.map((cur, i) => (
+              <Fragment key={i}>
+                <div className="cross-node">
+                  {curs.length > 2 && (
+                    <button className="cross-del" onClick={() => delCur(i)} title="Удалить">×</button>
+                  )}
+                  <input
+                    className="cross-cur-name"
+                    value={cur}
+                    onChange={(e) => setCurName(i, e.target.value)}
+                    placeholder="USD"
+                    maxLength={6}
+                  />
+                </div>
+                {i < rates.length && (
+                  <div className="cross-leg">
+                    <span className="cross-arrow">→</span>
+                    <input
+                      className="cross-rate-inp"
+                      type="text"
+                      inputMode="decimal"
+                      value={rates[i]}
+                      onChange={(e) => setRate(i, e.target.value)}
+                      placeholder="0"
+                    />
+                  </div>
+                )}
+              </Fragment>
+            ))}
+            <button className="cross-add-btn" onClick={addCur} title="Добавить валюту">+</button>
+          </div>
+        </div>
+        <div className="cross-result">
+          <div className="cross-result-top">
+            <div>
+              <div className="cross-result-label">1 {fromLabel} =</div>
+              <div className="cross-result-val">{displayVal != null ? `${fmtRate(displayVal, precision)} ${toLabel}` : '—'}</div>
+            </div>
+            <button className="cross-flip-btn" onClick={() => setFlipped((f) => !f)} title="Поменять направление">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M1 5.5H13M10 2.5L13 5.5L10 8.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M15 10.5H3M6 7.5L3 10.5L6 13.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
