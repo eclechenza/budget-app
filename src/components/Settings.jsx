@@ -5,8 +5,11 @@ import { loadGistConfig, connectGist, syncToGist, disconnectGist } from '../util
 
 const CUR_LABELS = { KZT: 'Тенге (₸)', RUB: 'Рубли (₽)', USD: 'Доллары ($)' }
 
+const BIRTH_KEY = 'budget_birthdate'
+
 export default function Settings({ state, onSave, onImport, onSaveInflation, theme, onThemeChange }) {
   const [inflRates, setInflRates] = useState(() => ({ KZT: '', RUB: '', USD: '', ...(state.inflationRates || {}) }))
+  const [birthDate, setBirthDate] = useState(() => localStorage.getItem(BIRTH_KEY) || '')
   const [toast, setToast] = useState(null) // { type: 'success'|'error', msg: string }
   const [ctxCopied, setCtxCopied] = useState(false)
   const [importPending, setImportPending] = useState(null) // { data, summary } | null
@@ -280,6 +283,18 @@ export default function Settings({ state, onSave, onImport, onSaveInflation, the
 
   return (
     <div>
+      <div className="card">
+        <div className="section-title">Профиль</div>
+        <label className="forecast-label" style={{ display: 'block', marginBottom: 4 }}>Дата рождения</label>
+        <input
+          type="date"
+          className="field-input"
+          style={{ width: 160 }}
+          value={birthDate}
+          onChange={(e) => { setBirthDate(e.target.value); localStorage.setItem(BIRTH_KEY, e.target.value) }}
+        />
+      </div>
+
       <div className="card theme-card">
         <span className="section-title" style={{ marginBottom: 0 }}>Тема</span>
         <div className="chips">

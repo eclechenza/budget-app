@@ -17,6 +17,7 @@ const PALETTE = [
   '#2980B9', '#27AE60', '#E74C3C', '#F39C12', '#16A085',
   '#8E44AD', '#2C3E50', '#C0392B', '#1ABC9C', '#D35400',
 ]
+const SAVINGS_COLOR = '#2ECC71'
 
 const CUR_TABS = [
   { id: 'KZT', label: '₸' },
@@ -110,6 +111,17 @@ export default function ExpenseAnalysis({ state }) {
 
   const totalIncome = cvt(avgIncomeKZT, 'KZT', displayCur)
 
+  // Фактический доход выбранного месяца (для расчёта сбережений)
+  const selectedMonthIncomeKZT = useMemo(() => {
+    const inc = selEntry.income || {}
+    let total = 0
+    ;(state.sources || []).forEach((src) => {
+      const cur = (state.sourceCur || {})[src] || 'KZT'
+      total += convertCurrency(+inc[src] || 0, cur, 'KZT', safeRates)
+    })
+    return total
+  }, [selKey, state, monthRates]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const refundMapping = state.refundMapping || {}
 
   const allItems = cats
@@ -138,6 +150,9 @@ export default function ExpenseAnalysis({ state }) {
   const totalKZT     = allItems.reduce((s, it) => s + it.netKZT, 0)
   const totalDisplay = allItems.reduce((s, it) => s + it.netDisplay, 0)
 
+  const savingsKZT     = Math.max(0, selectedMonthIncomeKZT - totalKZT)
+  const savingsDisplay = cvt(savingsKZT, 'KZT', displayCur)
+
   // На пай-чарт и в легенду попадают только категории с положительным чистым расходом
   const items = allItems.filter((it) => it.netKZT > 0).sort((a, b) => b.netKZT - a.netKZT)
 
@@ -147,12 +162,21 @@ export default function ExpenseAnalysis({ state }) {
     return map
   }, [cats])
 
+  const totalPieKZT = totalKZT + savingsKZT
+
+  const cardBg = getComputedStyle(document.documentElement).getPropertyValue('--bg-card').trim() || '#ffffff'
+
+  const chartLabels = [...items.map((it) => it.cat), ...(savingsKZT > 0 ? ['Сбережения'] : [])]
+  const chartValues = [...items.map((it) => Math.round(it.netKZT)), ...(savingsKZT > 0 ? [Math.round(savingsKZT)] : [])]
+  const chartColors = [...items.map((it) => PALETTE[catColorIndex[it.cat] % PALETTE.length]), ...(savingsKZT > 0 ? [SAVINGS_COLOR] : [])]
+
   const chartData = {
-    labels: items.map((it) => it.cat),
+    labels: chartLabels,
     datasets: [{
-      data: items.map((it) => Math.round(it.netKZT)),
-      backgroundColor: items.map((it) => PALETTE[catColorIndex[it.cat] % PALETTE.length]),
-      borderWidth: 0,
+      data: chartValues,
+      backgroundColor: chartColors,
+      borderWidth: 2,
+      borderColor: cardBg,
       hoverOffset: 6,
     }],
   }
@@ -165,9 +189,14 @@ export default function ExpenseAnalysis({ state }) {
       tooltip: {
         callbacks: {
           label: (ctx) => {
+            const isSavings = savingsKZT > 0 && ctx.dataIndex === items.length
+            if (isSavings) {
+              const pct = totalPieKZT > 0 ? Math.round((savingsKZT / totalPieKZT) * 100) : 0
+              return ` ${fmt(Math.round(savingsDisplay))} ${sym(displayCur)} (${pct}%)`
+            }
             const it  = items[ctx.dataIndex]
             const val = Math.round(it.netDisplay)
-            const pct = totalKZT > 0 ? Math.round((it.netKZT / totalKZT) * 100) : 0
+            const pct = totalPieKZT > 0 ? Math.round((it.netKZT / totalPieKZT) * 100) : 0
             return ` ${fmt(val)} ${sym(it.nativeCur)} (${pct}%)`
           },
         },
@@ -179,7 +208,7 @@ export default function ExpenseAnalysis({ state }) {
     <div>
       <div className="card">
         <div className="summary-header">
-          <div className="section-title">Анализ расходов</div>
+          <div className="section-title">Распределение</div>
           <div className="month-switcher">
             <button
               className="month-arrow"
@@ -225,30 +254,46 @@ export default function ExpenseAnalysis({ state }) {
               <div className="expense-chart-pie">
                 <Pie data={chartData} options={options} />
               </div>
-              <div className="expense-legend">
-                {items.map((it) => {
-                  const pct       = totalKZT > 0 ? Math.round((it.netKZT / totalKZT) * 100) : 0
-                  const incomePct = totalIncome > 0 ? Math.round((it.netDisplay / totalIncome) * 100) : null
-                  return (
-                    <div key={it.cat} className="expense-legend-row">
-                      <span className="expense-legend-dot" style={{ background: PALETTE[catColorIndex[it.cat] % PALETTE.length] }} />
-                      <span className="expense-legend-name">{it.cat}</span>
-                      <span className="expense-legend-amount">{fmt(Math.round(it.netDisplay))} {sym(it.nativeCur)}</span>
-                      <span className="expense-legend-pct">{pct}%</span>
-                      <span className="expense-legend-income-pct">
-                        {incomePct !== null ? `(${incomePct}% от ср. дохода)` : '—'}
+              <div className="expense-legend-columns">
+                {/* ── Колонка: Расходы ── */}
+                <div className="expense-legend-col">
+                  <div className="expense-legend-col-header">Расходы</div>
+                  <div className="expense-legend">
+                    {items.map((it) => {
+                      const pct = totalPieKZT > 0 ? Math.round((it.netKZT / totalPieKZT) * 100) : 0
+                      return (
+                        <div key={it.cat} className="expense-legend-row">
+                          <span className="expense-legend-dot" style={{ background: PALETTE[catColorIndex[it.cat] % PALETTE.length] }} />
+                          <span className="expense-legend-name">{it.cat}</span>
+                          <span className="expense-legend-amount">{fmt(Math.round(it.netDisplay))} {sym(it.nativeCur)}</span>
+                          <span className="expense-legend-pct">{pct}%</span>
+                        </div>
+                      )
+                    })}
+                    <div className="expense-legend-total">
+                      <span className="expense-legend-dot" style={{ visibility: 'hidden' }} />
+                      <span className="expense-legend-name">Итого</span>
+                      <span className="expense-legend-amount">{fmt(Math.round(totalDisplay))} {sym(displayCur)}</span>
+                      <span className="expense-legend-pct" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* ── Колонка: Сбережения ── */}
+                <div className="expense-legend-col expense-legend-col--savings">
+                  <div className="expense-legend-col-header">Сбережения</div>
+                  <div className="expense-legend">
+                    <div className="expense-legend-row">
+                      <span className="expense-legend-dot" style={{ background: SAVINGS_COLOR }} />
+                      <span className="expense-legend-name">Сохранил</span>
+                      <span className="expense-legend-amount">
+                        {fmt(Math.round(savingsDisplay))} {sym(displayCur)}
+                      </span>
+                      <span className="expense-legend-pct">
+                        {selectedMonthIncomeKZT > 0 ? `${Math.round((savingsKZT / selectedMonthIncomeKZT) * 100)}%` : '—'}
                       </span>
                     </div>
-                  )
-                })}
-                <div className="expense-legend-total">
-                  <span className="expense-legend-dot" style={{ visibility: 'hidden' }} />
-                  <span className="expense-legend-name">Итого</span>
-                  <span className="expense-legend-amount">{fmt(Math.round(totalDisplay))} {sym(displayCur)}</span>
-                  <span className="expense-legend-pct" />
-                  <span className="expense-legend-income-pct">
-                    {totalIncome > 0 ? `(${Math.round((totalDisplay / totalIncome) * 100)}% от ср. дохода)` : '—'}
-                  </span>
+                  </div>
                 </div>
               </div>
             </div>

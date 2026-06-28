@@ -20,7 +20,25 @@ import {
 ChartJS.register(CategoryScale, LinearScale, LineElement, PointElement, Tooltip, Legend)
 
 const ROUTE_KEY = 'budget_route'
+const BIRTH_KEY = 'budget_birthdate'
 const GOAL_COLORS = ['#1D9E75', '#9B59B6', '#E6A435', '#E74C3C', '#2980B9']
+
+function calcAgeAt(birthDateStr, reachDate) {
+  if (!birthDateStr) return null
+  const [by, bm, bd] = birthDateStr.split('-').map(Number)
+  let age = reachDate.getFullYear() - by
+  if (reachDate.getMonth() + 1 < bm || (reachDate.getMonth() + 1 === bm && reachDate.getDate() < (bd || 1))) age--
+  return age
+}
+
+function ageLabel(age) {
+  const mod100 = age % 100
+  const mod10 = age % 10
+  if (mod100 >= 11 && mod100 <= 14) return `${age} лет`
+  if (mod10 === 1) return `${age} год`
+  if (mod10 >= 2 && mod10 <= 4) return `${age} года`
+  return `${age} лет`
+}
 
 function loadRoute() {
   try { return JSON.parse(localStorage.getItem(ROUTE_KEY) || '{}') } catch { return {} }
@@ -354,25 +372,6 @@ export default function FinancialRoute({ state }) {
             ))}
           </div>
         </div>
-        {goalsWithReach.map((g, i) => (
-          <div key={g.id} style={{ marginBottom: 6, fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ display: 'inline-block', width: 20, height: 2, background: GOAL_COLORS[i % GOAL_COLORS.length], flexShrink: 0, borderRadius: 1 }} />
-            {g.reachedIdx >= 0
-              ? <span>
-                  <span className="muted">{g.name}</span>
-                  {' '}<span className="muted" style={{ fontSize: 11 }}>({fmt(g.amount)}&nbsp;{sym(g.currency)})</span>
-                  {' '}— достигается в <strong className="pos">{labels[g.reachedIdx]}</strong>
-                </span>
-              : <span className="muted">
-                  {g.name}
-                  {' '}<span style={{ fontSize: 11 }}>({fmt(g.amount)}&nbsp;{sym(g.currency)})</span>
-                  {' '}— не достигается за выбранный период
-                </span>
-            }
-          </div>
-        ))}
-        {goalsWithReach.length > 0 && <div style={{ marginBottom: 10 }} />}
-
         <div style={{ position: 'relative', height: 240 }}>
           <Line data={{ labels, datasets }} options={chartOptions} />
         </div>
@@ -395,22 +394,65 @@ export default function FinancialRoute({ state }) {
         )}
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 14 }}>
+          {/* Tile 1: итоги */}
           <div style={{ background: 'var(--bg-tile)', border: '0.5px solid rgba(128,128,128,.15)', borderRadius: 12, padding: '0.875rem 1rem' }}>
-            <div style={{ fontSize: 11, color: '#999', marginBottom: 4 }}>Капитал</div>
-            <div style={{ fontSize: 16, fontWeight: 500, color: 'var(--text)' }}>{fmt(finalNominal)} {sym(cur)}</div>
-          </div>
-          <div style={{ background: 'var(--bg-tile)', border: '0.5px solid rgba(128,128,128,.15)', borderRadius: 12, padding: '0.875rem 1rem' }}>
-            <div style={{ fontSize: 11, color: '#999', marginBottom: 4 }}>Заработано %</div>
-            <div style={{ fontSize: 16, fontWeight: 500, color: interestEarned >= 0 ? 'var(--green)' : 'var(--red)' }}>
-              {interestEarned >= 0 ? '+' : ''}{fmt(Math.round(interestEarned))} {sym(cur)}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
+              <span style={{ fontSize: 11, color: '#999' }}>Капитал</span>
+              <span style={{ fontSize: 15, fontWeight: 500, color: 'var(--text)' }}>{fmt(finalNominal)} {sym(cur)}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
+              <span style={{ fontSize: 11, color: '#999' }}>Заработано %</span>
+              <span style={{ fontSize: 15, fontWeight: 500, color: interestEarned >= 0 ? 'var(--green)' : 'var(--red)' }}>
+                {interestEarned >= 0 ? '+' : ''}{fmt(Math.round(interestEarned))} {sym(cur)}
+              </span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+              <span style={{ fontSize: 11, color: '#999' }}>Внесено средств</span>
+              <span style={{ fontSize: 15, fontWeight: 500, color: 'var(--text)' }}>{fmt(Math.round(totalContributed))} {sym(cur)}</span>
             </div>
           </div>
+          {/* Tile 2: цели */}
+          {goalsWithReach.length > 0 && (() => {
+            const now = new Date()
+            const birthDate = localStorage.getItem(BIRTH_KEY) || ''
+            return (
+              <div style={{ background: 'var(--bg-tile)', border: '0.5px solid rgba(128,128,128,.15)', borderRadius: 12, padding: '0.875rem 1rem' }}>
+                <div style={{ fontSize: 11, color: '#999', marginBottom: 8 }}>Достижение целей</div>
+                {[...goalsWithReach].sort((a, b) => {
+                  if (a.reachedIdx < 0 && b.reachedIdx < 0) return 0
+                  if (a.reachedIdx < 0) return 1
+                  if (b.reachedIdx < 0) return -1
+                  return a.reachedIdx - b.reachedIdx
+                }).map((g, i) => {
+                  let datePart
+                  if (g.reachedIdx >= 0) {
+                    const reachDate = new Date(now.getFullYear(), now.getMonth() + g.reachedIdx + 1, 1)
+                    const dateLabel = reachDate.toLocaleString('ru', { month: 'long', year: '2-digit' })
+                    const age = calcAgeAt(birthDate, reachDate)
+                    datePart = <span style={{ color: 'var(--green)' }}>{dateLabel}{age !== null ? <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}> ({ageLabel(age)})</span> : null}</span>
+                  } else {
+                    datePart = <span style={{ color: 'var(--text-muted)' }}>не достигается</span>
+                  }
+                  return (
+                    <div key={g.id} style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8, marginBottom: i < goalsWithReach.length - 1 ? 6 : 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 5, minWidth: 0 }}>
+                        <span style={{ display: 'inline-block', width: 7, height: 7, borderRadius: '50%', background: GOAL_COLORS[i % GOAL_COLORS.length], flexShrink: 0 }} />
+                        <span style={{ fontSize: 13, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{g.name || `Цель ${i + 1}`}</span>
+                        <span style={{ fontSize: 11, color: '#999', flexShrink: 0 }}>{fmt(g.amount)}&nbsp;{sym(g.currency)}</span>
+                      </div>
+                      <span style={{ fontSize: 13, fontWeight: 500, flexShrink: 0 }}>{datePart}</span>
+                    </div>
+                  )
+                })}
+              </div>
+            )
+          })()}
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, alignItems: 'flex-start' }}>
       {/* Параметры + Ступени сбережений */}
-      <div className="card" style={{ flex: '1 1 0', minWidth: 0 }}>
+      <div className="card" style={{ minWidth: 0 }}>
         <div className="section-title" style={{ marginBottom: 12 }}>Входные данные</div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '0.75fr 0.75fr auto', gap: '6px 12px', alignItems: 'center' }}>
@@ -493,7 +535,7 @@ export default function FinancialRoute({ state }) {
       </div>
 
 
-      <div style={{ flex: '1 1 0', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
       {/* Финансовые цели */}
       <div className="card" style={{ margin: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: goals.length > 0 ? 12 : 0 }}>

@@ -1281,6 +1281,36 @@ body {
   height: 160px;
   flex-shrink: 0;
 }
+.expense-legend-columns {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+}
+.expense-legend-col {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.expense-legend-col:first-child {
+  flex: 1;
+}
+.expense-legend-col--savings {
+  flex-shrink: 0;
+  min-width: 160px;
+}
+.expense-legend-col-header {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  padding-bottom: 4px;
+  margin-bottom: 2px;
+  border-bottom: 1px solid var(--border);
+}
 .expense-legend {
   flex: 1;
   min-width: 0;
@@ -1298,6 +1328,13 @@ body {
     width: 180px;
     height: 180px;
     align-self: center;
+  }
+  .expense-legend-columns {
+    flex-direction: column;
+    gap: 16px;
+  }
+  .expense-legend-col--savings {
+    min-width: 0;
   }
 }
 .expense-legend-row {
@@ -1353,6 +1390,7 @@ body {
   margin-top: 4px;
 }
 
+[data-theme="dark"] .expense-legend-col-header  { border-bottom-color: rgba(255,255,255,.1); }
 [data-theme="dark"] .expense-legend-row        { border-bottom-color: rgba(255,255,255,.06); }
 [data-theme="dark"] .expense-legend-name       { color: #aaa; }
 [data-theme="dark"] .expense-legend-amount     { color: #f0f0f0; }
