@@ -71,7 +71,7 @@ export function getAvgSavings(state) {
 
 export function calcProjection(capital, savings, annualRate, annualInflation, years, compound) {
   const monthlyRate = annualRate / 100 / 12
-  const monthlyInfl = annualInflation / 100 / 12
+  const annualInflFrac = annualInflation / 100
   const totalMonths = years * 12
 
   const nominals = []
@@ -87,8 +87,8 @@ export function calcProjection(capital, savings, annualRate, annualInflation, ye
     } else {
       cap = cap + initCap * monthlyRate + savings
     }
-    const real = monthlyInfl > 0
-      ? cap / Math.pow(1 + monthlyInfl, m)
+    const real = annualInflFrac > 0
+      ? cap / Math.pow(1 + annualInflFrac, m / 12)
       : cap
 
     if (m % 12 === 0) {

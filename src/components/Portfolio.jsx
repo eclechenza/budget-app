@@ -1,10 +1,33 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { Bar, Line } from 'react-chartjs-2'
 import { Chart as ChartJS, ArcElement, Tooltip, BarElement, LineElement, PointElement, LinearScale, CategoryScale, Filler } from 'chart.js'
 import { Doughnut } from 'react-chartjs-2'
 import data from '../data/portfolio.json'
 
 ChartJS.register(ArcElement, Tooltip, BarElement, LineElement, PointElement, LinearScale, CategoryScale, Filler)
+
+function getCssVar(name) {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim()
+}
+
+function useChartColors() {
+  const [colors, setColors] = useState(() => ({
+    textMuted: getCssVar('--text-muted') || '#888',
+    border: getCssVar('--border') || 'rgba(0,0,0,.1)',
+  }))
+  const observer = useRef(null)
+  useEffect(() => {
+    observer.current = new MutationObserver(() => {
+      setColors({
+        textMuted: getCssVar('--text-muted') || '#888',
+        border: getCssVar('--border') || 'rgba(0,0,0,.1)',
+      })
+    })
+    observer.current.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
+    return () => observer.current.disconnect()
+  }, [])
+  return colors
+}
 
 function fmt(n, decimals = 2) {
   return n.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals })
@@ -40,6 +63,7 @@ const PRICE_PERIODS = [
 ]
 
 function PositionChart({ position }) {
+  const { textMuted, border } = useChartColors()
   const [period, setPeriod] = useState('1Y')
   const close = getTickerClose(position.ticker)
   const days  = PRICE_PERIODS.find(p => p.id === period)?.days ?? 252
@@ -65,10 +89,10 @@ function PositionChart({ position }) {
       data: slicedClose,
       borderColor: lineColor,
       backgroundColor: lineColor + '18',
-      borderWidth: 1.5,
+      borderWidth: 3,
       pointRadius: 0,
-      fill: true,
-      tension: 0.3,
+      fill: 'origin',
+      tension: 0.35,
     }]
   }
 
@@ -91,15 +115,15 @@ function PositionChart({ position }) {
     scales: {
       x: {
         grid: { display: false },
-        ticks: { color: 'var(--text-muted)', font: { size: 10 }, maxRotation: 0, maxTicksLimit: 7 },
+        ticks: { color: textMuted, font: { size: 10 }, maxRotation: 0, maxTicksLimit: 7 },
         border: { display: false },
       },
       y: {
         position: 'right',
         min: yMin - yPad,
         max: yMax + yPad,
-        grid: { color: 'var(--border)' },
-        ticks: { color: 'var(--text-muted)', font: { size: 10 }, callback: v => '$' + fmt(v, 0) },
+        grid: { color: border },
+        ticks: { color: textMuted, font: { size: 10 }, callback: v => '$' + fmt(v, 0) },
         border: { display: false },
       }
     }
@@ -166,22 +190,14 @@ const PERIODS = [
   { id: '3M',  label: '3 мес', days: 90  },
   { id: '6M',  label: '6 мес', days: 180 },
   { id: '1Y',  label: '1 год', days: 365 },
-  { id: 'ALL', label: 'Всё',   days: null },
 ]
 
 export default function Portfolio() {
+  const { textMuted, border } = useChartColors()
   const [expandedTicker, setExpandedTicker] = useState(null)
   const allSeries = useMemo(() => buildNavSeries(data.positions, data.history, data.trades), [])
-  const historyDays = allSeries.length
 
-  const availablePeriods = PERIODS.filter(p => p.days === null || p.days <= historyDays + 3)
-  const [periodId, setPeriodId] = useState(availablePeriods[availablePeriods.length - 1].id)
-
-  const filtered = useMemo(() => {
-    const p = PERIODS.find(p => p.id === periodId)
-    if (!p.days) return allSeries
-    return allSeries.slice(-p.days)
-  }, [periodId, allSeries])
+  const filtered = allSeries
 
   const useMonthly = filtered.length > 60
   const chartPoints = useMonthly ? groupByMonth(filtered) : filtered.map(s => ({
@@ -203,13 +219,13 @@ export default function Portfolio() {
     labels: chartPoints.map(p => p.label),
     datasets: [{
       data: chartPoints.map(p => p.nav),
-      backgroundColor: accentColor + (useMonthly ? 'cc' : ''),
+      backgroundColor: useMonthly ? accentColor + 'cc' : accentColor + '18',
       borderColor: accentColor,
-      borderWidth: useMonthly ? 0 : 2,
+      borderWidth: useMonthly ? 0 : 3,
       borderRadius: useMonthly ? 6 : 0,
       pointRadius: 0,
-      fill: !useMonthly,
-      tension: 0.3,
+      fill: useMonthly ? false : 'origin',
+      tension: 0.35,
     }]
   }
 
@@ -232,15 +248,15 @@ export default function Portfolio() {
     scales: {
       x: {
         grid: { display: false },
-        ticks: { color: 'var(--text-muted)', font: { size: 11 }, maxRotation: 0, maxTicksLimit: 8 },
+        ticks: { color: textMuted, font: { size: 11 }, maxRotation: 0, maxTicksLimit: 8 },
         border: { display: false },
       },
       y: {
         position: 'right',
         min: yMin - yPad,
         max: yMax + yPad,
-        grid: { color: 'var(--border)' },
-        ticks: { color: 'var(--text-muted)', font: { size: 11 }, callback: v => '$' + fmt(v, 0) },
+        grid: { color: border },
+        ticks: { color: textMuted, font: { size: 11 }, callback: v => '$' + fmt(v, 0) },
         border: { display: false },
       }
     }
@@ -317,17 +333,6 @@ export default function Portfolio() {
           }
         </div>
 
-        <div className="portfolio-periods">
-          {availablePeriods.map(p => (
-            <button
-              key={p.id}
-              className={`period-btn${periodId === p.id ? ' active' : ''}`}
-              onClick={() => setPeriodId(p.id)}
-            >
-              {p.label}
-            </button>
-          ))}
-        </div>
       </div>
 
       <div className="portfolio-main">

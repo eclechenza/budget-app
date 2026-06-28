@@ -261,12 +261,12 @@ export default function Rates({ state }) {
           {refreshing ? 'Обновление…' : 'Обновить'}
         </button>
       </div>
-      <CrossRateCalc />
       <div className="rates-list">
         {PAIRS.map((pair) => (
           <RateBlock key={pair.id} pair={pair} seriesByPeriod={seriesByPeriod} latest={latest} />
         ))}
       </div>
+      <CrossRateCalc />
       <FixedRatesTable state={state} storeVersion={storeVersion} />
     </>
   )
@@ -499,58 +499,66 @@ function CrossRateCalc() {
   const fromLabel = flipped ? curs[curs.length - 1] : curs[0]
   const toLabel = flipped ? curs[0] : curs[curs.length - 1]
 
+  const [open, setOpen] = useState(false)
+
   return (
     <div className="card cross-calc">
-      <div className="cross-calc-inner">
-        <div className="cross-chain-scroll">
-          <div className="cross-chain">
-            {curs.map((cur, i) => (
-              <Fragment key={i}>
-                <div className="cross-node">
-                  {curs.length > 2 && (
-                    <button className="cross-del" onClick={() => delCur(i)} title="Удалить">×</button>
-                  )}
-                  <input
-                    className="cross-cur-name"
-                    value={cur}
-                    onChange={(e) => setCurName(i, e.target.value)}
-                    placeholder="USD"
-                    maxLength={6}
-                  />
-                </div>
-                {i < rates.length && (
-                  <div className="cross-leg">
-                    <span className="cross-arrow">→</span>
+      <div className="section-title-row" onClick={() => setOpen((v) => !v)} style={{ cursor: 'pointer' }}>
+        <div className="section-title">Калькулятор кросс курса</div>
+        <span className="expand-chevron">{open ? '▲' : '▼'}</span>
+      </div>
+      {open && (
+        <div className="cross-calc-inner">
+          <div className="cross-chain-scroll">
+            <div className="cross-chain">
+              {curs.map((cur, i) => (
+                <Fragment key={i}>
+                  <div className="cross-node">
+                    {curs.length > 2 && (
+                      <button className="cross-del" onClick={(e) => { e.stopPropagation(); delCur(i) }} title="Удалить">×</button>
+                    )}
                     <input
-                      className="cross-rate-inp"
-                      type="text"
-                      inputMode="decimal"
-                      value={rates[i]}
-                      onChange={(e) => setRate(i, e.target.value)}
-                      placeholder="0"
+                      className="cross-cur-name"
+                      value={cur}
+                      onChange={(e) => setCurName(i, e.target.value)}
+                      placeholder="USD"
+                      maxLength={6}
                     />
                   </div>
-                )}
-              </Fragment>
-            ))}
-            <button className="cross-add-btn" onClick={addCur} title="Добавить валюту">+</button>
-          </div>
-        </div>
-        <div className="cross-result">
-          <div className="cross-result-top">
-            <div>
-              <div className="cross-result-label">1 {fromLabel} =</div>
-              <div className="cross-result-val">{displayVal != null ? `${fmtRate(displayVal, precision)} ${toLabel}` : '—'}</div>
+                  {i < rates.length && (
+                    <div className="cross-leg">
+                      <span className="cross-arrow">→</span>
+                      <input
+                        className="cross-rate-inp"
+                        type="text"
+                        inputMode="decimal"
+                        value={rates[i]}
+                        onChange={(e) => setRate(i, e.target.value)}
+                        placeholder="0"
+                      />
+                    </div>
+                  )}
+                </Fragment>
+              ))}
+              <button className="cross-add-btn" onClick={addCur} title="Добавить валюту">+</button>
             </div>
-            <button className="cross-flip-btn" onClick={() => setFlipped((f) => !f)} title="Поменять направление">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M1 5.5H13M10 2.5L13 5.5L10 8.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M15 10.5H3M6 7.5L3 10.5L6 13.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </button>
+          </div>
+          <div className="cross-result">
+            <div className="cross-result-top">
+              <div>
+                <div className="cross-result-label">1 {fromLabel} =</div>
+                <div className="cross-result-val">{displayVal != null ? `${fmtRate(displayVal, precision)} ${toLabel}` : '—'}</div>
+              </div>
+              <button className="cross-flip-btn" onClick={() => setFlipped((f) => !f)} title="Поменять направление">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M1 5.5H13M10 2.5L13 5.5L10 8.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M15 10.5H3M6 7.5L3 10.5L6 13.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }

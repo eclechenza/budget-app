@@ -11,7 +11,7 @@ import Portfolio       from './components/Portfolio'
 import { TAB_ICONS }   from './components/TabIcons'
 
 const TABS = ['overview', 'assets', 'route', 'rates', 'entry', 'portfolio', 'settings']
-const TAB_LABELS = { overview: 'Обзор', assets: 'Капитал', route: 'Маршрут', rates: 'Курс валют', entry: 'Ввод данных', settings: 'Настройки', portfolio: 'Инвестиции' }
+const TAB_LABELS = { overview: 'Обзор', assets: 'Капитал', route: 'Прогноз капитала', rates: 'Курс валют', entry: 'Ввод данных', settings: 'Настройки', portfolio: 'Инвестиции' }
 
 export default function App() {
   const [tab,        setTab]        = useState('overview')
