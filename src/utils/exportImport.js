@@ -1,6 +1,7 @@
 const EXPORT_VERSION = 1
 const ROUTE_KEY = 'budget_route'
 const RATES_KEY = 'budget_rates_history'
+const BIRTH_KEY = 'budget_birthdate'
 
 function buildExportData(budgetState) {
   let routeData = null
@@ -13,12 +14,14 @@ function buildExportData(budgetState) {
     const raw = localStorage.getItem(RATES_KEY)
     if (raw) ratesData = JSON.parse(raw)
   } catch {}
+  const birthDate = localStorage.getItem(BIRTH_KEY) || null
   return {
     version: EXPORT_VERSION,
     exportedAt: new Date().toISOString(),
     budgetState,
     routeData,
     ratesData,
+    birthDate,
   }
 }
 
@@ -48,6 +51,11 @@ export function applyImport(data) {
   if (data.ratesData && typeof data.ratesData === 'object') {
     try {
       localStorage.setItem(RATES_KEY, JSON.stringify(data.ratesData))
+    } catch {}
+  }
+  if (data.birthDate && typeof data.birthDate === 'string') {
+    try {
+      localStorage.setItem(BIRTH_KEY, data.birthDate)
     } catch {}
   }
   return data.budgetState
