@@ -14,7 +14,10 @@ const TABS = ['overview', 'assets', 'route', 'rates', 'entry', 'portfolio', 'set
 const TAB_LABELS = { overview: 'Обзор', assets: 'Капитал', route: 'Прогноз капитала', rates: 'Курс валют', entry: 'Ввод данных', settings: 'Настройки', portfolio: 'Инвестиции' }
 
 export default function App() {
-  const [tab,        setTab]        = useState('overview')
+  const [tab,        setTab]        = useState(() => {
+    const saved = localStorage.getItem('active_tab')
+    return TABS.includes(saved) ? saved : 'overview'
+  })
   const [state,      setState]      = useState(() => loadState())
   const [theme,      setTheme]      = useState(() => localStorage.getItem('theme') || 'light')
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -128,6 +131,7 @@ export default function App() {
 
   function handleTabClick(t) {
     setTab(t)
+    localStorage.setItem('active_tab', t)
     setDrawerOpen(false)
     window.scrollTo(0, 0)
   }
