@@ -81,6 +81,7 @@
 
 html {
   overflow-y: scroll;
+  overflow-x: hidden;
   scrollbar-gutter: stable;
 }
 
@@ -166,6 +167,8 @@ body {
   border-radius: 12px;
   padding: 1rem 1.25rem;
   margin-bottom: 12px;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .charts-grid {
