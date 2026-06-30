@@ -1233,6 +1233,23 @@ body {
 
 /* Financial Route */
 
+@media (max-width: 700px) {
+  .route-summary-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .route-main-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .route-goal-row,
+  .route-expense-form-row {
+    flex-wrap: wrap;
+  }
+  .route-goal-row .forecast-input-row,
+  .route-expense-form-row .forecast-input-row {
+    width: 110px !important;
+  }
+}
+
 .route-expense-row {
   display: flex;
   align-items: center;

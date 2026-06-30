@@ -393,7 +393,7 @@ export default function FinancialRoute({ state }) {
           </div>
         )}
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 14 }}>
+        <div className="route-summary-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 14 }}>
           {/* Tile 1: итоги */}
           <div style={{ background: 'var(--bg-tile)', border: '0.5px solid rgba(128,128,128,.15)', borderRadius: 12, padding: '0.875rem 1rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
@@ -450,7 +450,7 @@ export default function FinancialRoute({ state }) {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, alignItems: 'flex-start' }}>
+      <div className="route-main-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, alignItems: 'flex-start' }}>
       {/* Параметры + Ступени сбережений */}
       <div className="card" style={{ minWidth: 0 }}>
         <div className="section-title" style={{ marginBottom: 12 }}>Входные данные</div>
@@ -544,7 +544,7 @@ export default function FinancialRoute({ state }) {
         </div>
 
         {goals.map((g, i) => (
-          <div key={g.id} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+          <div key={g.id} className="route-goal-row" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
             <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: GOAL_COLORS[i % GOAL_COLORS.length], flexShrink: 0 }} />
             <input
               className="field-input"
@@ -576,7 +576,7 @@ export default function FinancialRoute({ state }) {
         </div>
 
         {curExpenses.map((e) => (
-          <div key={e.id} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+          <div key={e.id} className="route-expense-form-row" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
             <input
               className="field-input"
               style={{ flex: 2, minWidth: 0 }}
