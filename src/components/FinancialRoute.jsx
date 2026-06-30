@@ -288,16 +288,21 @@ export default function FinancialRoute({ state }) {
   const totalContributed = p.capital + p.savings * months
   const interestEarned = finalNominal - totalContributed
 
+  const longNominals = useMemo(
+    () => calcRoute(p.capital, p.savings, p.rate, p.inflation || 0, compound, 1200, expenses, savingsSteps, cur).nominals,
+    [p, compound, expenses, savingsSteps, cur]
+  )
+
   const goalsWithReach = useMemo(() =>
     goals.map((g) => {
       const convertedAmount = Math.round(convertCurrency(g.amount, g.currency || 'KZT', cur, rates))
       return {
         ...g,
         convertedAmount,
-        reachedIdx: nominals.findIndex((v) => v >= convertedAmount),
+        reachedIdx: longNominals.findIndex((v) => v >= convertedAmount),
       }
     }),
-    [goals, nominals, cur, rates]
+    [goals, longNominals, cur, rates]
   )
 
   // ── Chart ────────────────────────────────────────────────────────────────────

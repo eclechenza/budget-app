@@ -2,6 +2,8 @@
 
 Локальный трекер личного бюджета с мультивалютностью (KZT/RUB/USD). Работает полностью в браузере — сервера нет, все данные в `localStorage`.
 
+Прод: https://budget-app-rho-nine.vercel.app/ (деплоится из ветки `main`).
+
 ## Стек
 
 - React 18 + Vite 5, JSX (не TypeScript)

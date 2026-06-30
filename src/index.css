@@ -586,6 +586,7 @@ body {
 .tiles-grid-wrap {
   container-type: inline-size;
   container-name: tiles-grid;
+  margin-top: 12px;
 }
 .tiles-grid {
   display: grid;
