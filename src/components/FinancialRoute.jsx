@@ -451,6 +451,26 @@ export default function FinancialRoute({ state }) {
             )
           })()}
         </div>
+
+        {/* Slider */}
+        <div style={{ marginTop: 14 }}>
+          <label className="forecast-label" style={{ marginBottom: 4 }}>Горизонт — {monthsLabel(months)}</label>
+          <div className="forecast-slider-wrap" style={{ position: 'relative' }}>
+            <input type="range" min={12} max={1200} step={12} value={months}
+              onChange={(e) => setMonths(+e.target.value)} className="forecast-slider" />
+            <div className="forecast-slider-ruler">
+              {Array.from({ length: 100 }, (_, i) => i + 1).map((year) => {
+                const isMajor = year % 10 === 0
+                return (
+                  <div key={year} className={`forecast-tick${isMajor ? ' forecast-tick--major' : ''}`}
+                    style={{ left: `${(year - 1) / 99 * 100}%` }}>
+                    {isMajor && <span className="forecast-tick-label">{year}</span>}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="route-main-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 12, alignItems: 'flex-start' }}>
@@ -477,26 +497,6 @@ export default function FinancialRoute({ state }) {
           </div>
           <div />
 
-          {/* Slider row under capital */}
-          <div style={{ gridColumn: '1 / 3', marginTop: 2 }}>
-            <label className="forecast-label" style={{ marginBottom: 4 }}>Горизонт — {monthsLabel(months)}</label>
-            <div className="forecast-slider-wrap" style={{ position: 'relative' }}>
-              <input type="range" min={12} max={360} step={12} value={months}
-                onChange={(e) => setMonths(+e.target.value)} className="forecast-slider" />
-              <div className="forecast-slider-ruler">
-                {Array.from({ length: 30 }, (_, i) => i + 1).map((year) => {
-                  const isMajor = year % 5 === 0
-                  return (
-                    <div key={year} className={`forecast-tick${isMajor ? ' forecast-tick--major' : ''}`}
-                      style={{ left: `${(year - 1) / 29 * 100}%` }}>
-                      {isMajor && <span className="forecast-tick-label">{year}</span>}
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          </div>
-          <div />
 
           {/* Savings header */}
           <div style={{ gridColumn: '1 / -1', marginTop: 10 }} className="forecast-label">Сбережения / мес</div>
