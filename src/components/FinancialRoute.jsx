@@ -437,13 +437,13 @@ export default function FinancialRoute({ state }) {
                     datePart = <span style={{ color: 'var(--text-muted)' }}>не достигается</span>
                   }
                   return (
-                    <div key={g.id} style={{ marginBottom: i < goalsWithReach.length - 1 ? 8 : 0 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
+                    <div key={g.id} style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap', marginBottom: i < goalsWithReach.length - 1 ? 6 : 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 5, minWidth: 0 }}>
                         <span style={{ display: 'inline-block', width: 7, height: 7, borderRadius: '50%', background: GOAL_COLORS[i % GOAL_COLORS.length], flexShrink: 0 }} />
-                        <span style={{ fontSize: 13, color: 'var(--text)' }}>{g.name || `Цель ${i + 1}`}</span>
-                        <span style={{ fontSize: 11, color: '#999', marginLeft: 2 }}>{fmt(g.amount)}&nbsp;{sym(g.currency)}</span>
+                        <span style={{ fontSize: 13, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{g.name || `Цель ${i + 1}`}</span>
+                        <span style={{ fontSize: 11, color: '#999', flexShrink: 0 }}>{fmt(g.amount)}&nbsp;{sym(g.currency)}</span>
                       </div>
-                      <div style={{ fontSize: 13, fontWeight: 500, paddingLeft: 12, wordBreak: 'break-word' }}>{datePart}</div>
+                      <span style={{ fontSize: 13, fontWeight: 500, flexShrink: 0 }}>{datePart}</span>
                     </div>
                   )
                 })}
