@@ -400,21 +400,17 @@ export default function FinancialRoute({ state }) {
 
         <div className="route-summary-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 10, marginTop: 14 }}>
           {/* Tile 1: итоги */}
-          <div style={{ background: 'var(--bg-tile)', border: '0.5px solid rgba(128,128,128,.15)', borderRadius: 12, padding: '0.875rem 1rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
-              <span style={{ fontSize: 11, color: '#999' }}>Капитал</span>
-              <span style={{ fontSize: 15, fontWeight: 500, color: 'var(--text)' }}>{fmt(finalNominal)} {sym(cur)}</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
-              <span style={{ fontSize: 11, color: '#999' }}>Заработано %</span>
-              <span style={{ fontSize: 15, fontWeight: 500, color: interestEarned >= 0 ? 'var(--green)' : 'var(--red)' }}>
-                {interestEarned >= 0 ? '+' : ''}{fmt(Math.round(interestEarned))} {sym(cur)}
-              </span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-              <span style={{ fontSize: 11, color: '#999' }}>Внесено средств</span>
-              <span style={{ fontSize: 15, fontWeight: 500, color: 'var(--text)' }}>{fmt(Math.round(totalContributed))} {sym(cur)}</span>
-            </div>
+          <div style={{ background: 'var(--bg-tile)', border: '0.5px solid rgba(128,128,128,.15)', borderRadius: 12, padding: '0.875rem 1rem', display: 'flex', flexWrap: 'wrap', gap: '8px 16px' }}>
+            {[
+              { label: 'Капитал', value: `${fmt(finalNominal)} ${sym(cur)}`, color: 'var(--text)' },
+              { label: 'Заработано %', value: `${interestEarned >= 0 ? '+' : ''}${fmt(Math.round(interestEarned))} ${sym(cur)}`, color: interestEarned >= 0 ? 'var(--green)' : 'var(--red)' },
+              { label: 'Внесено средств', value: `${fmt(Math.round(totalContributed))} ${sym(cur)}`, color: 'var(--text)' },
+            ].map(({ label, value, color }) => (
+              <div key={label} style={{ flex: '1 1 120px', minWidth: 0 }}>
+                <div style={{ fontSize: 11, color: '#999', marginBottom: 2 }}>{label}</div>
+                <div style={{ fontSize: 15, fontWeight: 500, color, wordBreak: 'break-word' }}>{value}</div>
+              </div>
+            ))}
           </div>
           {/* Tile 2: цели */}
           {goalsWithReach.length > 0 && (() => {
@@ -439,13 +435,13 @@ export default function FinancialRoute({ state }) {
                     datePart = <span style={{ color: 'var(--text-muted)' }}>не достигается</span>
                   }
                   return (
-                    <div key={g.id} style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8, marginBottom: i < goalsWithReach.length - 1 ? 6 : 0 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 5, minWidth: 0 }}>
+                    <div key={g.id} style={{ marginBottom: i < goalsWithReach.length - 1 ? 8 : 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
                         <span style={{ display: 'inline-block', width: 7, height: 7, borderRadius: '50%', background: GOAL_COLORS[i % GOAL_COLORS.length], flexShrink: 0 }} />
-                        <span style={{ fontSize: 13, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{g.name || `Цель ${i + 1}`}</span>
-                        <span style={{ fontSize: 11, color: '#999', flexShrink: 0 }}>{fmt(g.amount)}&nbsp;{sym(g.currency)}</span>
+                        <span style={{ fontSize: 13, color: 'var(--text)' }}>{g.name || `Цель ${i + 1}`}</span>
+                        <span style={{ fontSize: 11, color: '#999', marginLeft: 2 }}>{fmt(g.amount)}&nbsp;{sym(g.currency)}</span>
                       </div>
-                      <span style={{ fontSize: 13, fontWeight: 500, flexShrink: 0 }}>{datePart}</span>
+                      <div style={{ fontSize: 13, fontWeight: 500, paddingLeft: 12, wordBreak: 'break-word' }}>{datePart}</div>
                     </div>
                   )
                 })}
