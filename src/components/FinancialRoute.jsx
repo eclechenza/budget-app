@@ -393,7 +393,7 @@ export default function FinancialRoute({ state }) {
           </div>
         )}
 
-        <div className="route-summary-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 14 }}>
+        <div className="route-summary-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 10, marginTop: 14 }}>
           {/* Tile 1: итоги */}
           <div style={{ background: 'var(--bg-tile)', border: '0.5px solid rgba(128,128,128,.15)', borderRadius: 12, padding: '0.875rem 1rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
@@ -450,12 +450,12 @@ export default function FinancialRoute({ state }) {
         </div>
       </div>
 
-      <div className="route-main-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, alignItems: 'flex-start' }}>
+      <div className="route-main-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 12, alignItems: 'flex-start' }}>
       {/* Параметры + Ступени сбережений */}
       <div className="card" style={{ minWidth: 0 }}>
         <div className="section-title" style={{ marginBottom: 12 }}>Входные данные</div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '0.75fr 0.75fr auto', gap: '6px 12px', alignItems: 'center' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 0.75fr) minmax(0, 0.75fr) auto', gap: '6px 12px', alignItems: 'center' }}>
           {/* Labels row */}
           <label className="forecast-label">Начальный капитал</label>
           <label className="forecast-label">Ставка вклада, % год.</label>
