@@ -322,7 +322,7 @@ export default function FinancialRoute({ state }) {
       label: g.currency !== cur
         ? `${g.name || `Цель ${i + 1}`} (${sym(g.currency)})`
         : (g.name || `Цель ${i + 1}`),
-      data: nominals.map(() => g.convertedAmount),
+      data: nominals.map((_, idx) => (g.reachedIdx !== -1 && idx > g.reachedIdx) ? null : g.convertedAmount),
       borderColor: GOAL_COLORS[i % GOAL_COLORS.length],
       borderDash: [6, 4],
       borderWidth: 1.5,
