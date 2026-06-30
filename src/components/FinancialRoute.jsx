@@ -402,13 +402,13 @@ export default function FinancialRoute({ state }) {
           {/* Tile 1: итоги */}
           <div style={{ background: 'var(--bg-tile)', border: '0.5px solid rgba(128,128,128,.15)', borderRadius: 12, padding: '0.875rem 1rem', display: 'flex', flexWrap: 'wrap', gap: '8px 16px' }}>
             {[
-              { label: 'Капитал', value: `${fmt(finalNominal)} ${sym(cur)}`, color: 'var(--text)' },
-              { label: 'Заработано %', value: `${interestEarned >= 0 ? '+' : ''}${fmt(Math.round(interestEarned))} ${sym(cur)}`, color: interestEarned >= 0 ? 'var(--green)' : 'var(--red)' },
-              { label: 'Внесено средств', value: `${fmt(Math.round(totalContributed))} ${sym(cur)}`, color: 'var(--text)' },
-            ].map(({ label, value, color }) => (
+              { label: 'Капитал', value: `${fmt(finalNominal)} ${sym(cur)}` },
+              { label: 'Заработано %', value: `${interestEarned >= 0 ? '+' : ''}${fmt(Math.round(interestEarned))} ${sym(cur)}` },
+              { label: 'Внесено средств', value: `${fmt(Math.round(totalContributed))} ${sym(cur)}` },
+            ].map(({ label, value }) => (
               <div key={label} style={{ flex: '1 1 120px', minWidth: 0 }}>
                 <div style={{ fontSize: 11, color: '#999', marginBottom: 2 }}>{label}</div>
-                <div style={{ fontSize: 15, fontWeight: 500, color, wordBreak: 'break-word' }}>{value}</div>
+                <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)', wordBreak: 'break-word' }}>{value}</div>
               </div>
             ))}
           </div>
@@ -430,7 +430,7 @@ export default function FinancialRoute({ state }) {
                     const reachDate = new Date(now.getFullYear(), now.getMonth() + g.reachedIdx + 1, 1)
                     const dateLabel = reachDate.toLocaleString('ru', { month: 'long', year: '2-digit' })
                     const age = calcAgeAt(birthDate, reachDate)
-                    datePart = <span style={{ color: 'var(--green)' }}>{dateLabel}{age !== null ? <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}> ({ageLabel(age)})</span> : null}</span>
+                    datePart = <span>{dateLabel}{age !== null ? <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}> ({ageLabel(age)})</span> : null}</span>
                   } else {
                     datePart = <span style={{ color: 'var(--text-muted)' }}>не достигается</span>
                   }
