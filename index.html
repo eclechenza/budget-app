@@ -11,6 +11,14 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="theme-color" content="#23272F" />
     <title>Scroooge</title>
+    <script>
+      try {
+        if (localStorage.getItem('theme') === 'dark') {
+          document.documentElement.setAttribute('data-theme', 'dark')
+          document.documentElement.style.background = '#1a1d23'
+        }
+      } catch {}
+    </script>
     <script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script>
   </head>
   <body>
