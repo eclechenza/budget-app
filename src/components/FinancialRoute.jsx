@@ -400,17 +400,19 @@ export default function FinancialRoute({ state }) {
 
         <div className="route-summary-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 10, marginTop: 14 }}>
           {/* Tile 1: итоги */}
-          <div style={{ background: 'var(--bg-tile)', border: '0.5px solid rgba(128,128,128,.15)', borderRadius: 12, padding: '0.875rem 1rem', display: 'flex', flexWrap: 'wrap', gap: '8px 16px' }}>
-            {[
-              { label: 'Капитал', value: `${fmt(finalNominal)} ${sym(cur)}` },
-              { label: 'Заработано %', value: `${interestEarned >= 0 ? '+' : ''}${fmt(Math.round(interestEarned))} ${sym(cur)}` },
-              { label: 'Внесено средств', value: `${fmt(Math.round(totalContributed))} ${sym(cur)}` },
-            ].map(({ label, value }) => (
-              <div key={label} style={{ flex: '1 1 120px', minWidth: 0 }}>
-                <div style={{ fontSize: 11, color: '#999', marginBottom: 2 }}>{label}</div>
-                <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)', wordBreak: 'break-word' }}>{value}</div>
-              </div>
-            ))}
+          <div style={{ background: 'var(--bg-tile)', border: '0.5px solid rgba(128,128,128,.15)', borderRadius: 12, padding: '0.875rem 1rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
+              <span style={{ fontSize: 11, color: '#999' }}>Капитал</span>
+              <span style={{ fontSize: 13, fontWeight: 500 }}>{fmt(finalNominal)} {sym(cur)}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
+              <span style={{ fontSize: 11, color: '#999' }}>Заработано %</span>
+              <span style={{ fontSize: 13, fontWeight: 500 }}>{interestEarned >= 0 ? '+' : ''}{fmt(Math.round(interestEarned))} {sym(cur)}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+              <span style={{ fontSize: 11, color: '#999' }}>Внесено средств</span>
+              <span style={{ fontSize: 13, fontWeight: 500 }}>{fmt(Math.round(totalContributed))} {sym(cur)}</span>
+            </div>
           </div>
           {/* Tile 2: цели */}
           {goalsWithReach.length > 0 && (() => {
