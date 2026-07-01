@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { monthLabel, sym, CURRENCIES } from '../utils/storage'
 import { downloadExport, applyImport, validateImport, importSummary } from '../utils/exportImport'
 import { loadGistConfig, connectGist, syncToGist, disconnectGist } from '../utils/gistSync'
+import { supabase } from '../utils/supabase'
 
 const CUR_LABELS = { KZT: 'Тенге (₸)', RUB: 'Рубли (₽)', USD: 'Доллары ($)' }
 
@@ -283,6 +284,11 @@ export default function Settings({ state, onSave, onImport, onSaveInflation, the
 
   return (
     <div>
+      <div className="card">
+        <div className="section-title">Аккаунт</div>
+        <button className="btn-danger" onClick={() => supabase.auth.signOut()}>Выйти</button>
+      </div>
+
       <div className="card">
         <div className="section-title">Профиль</div>
         <label className="forecast-label" style={{ display: 'block', marginBottom: 4 }}>Дата рождения</label>

@@ -1,13 +1,16 @@
 import { useState, useEffect, useRef } from 'react'
 import { loadState, saveState } from './utils/storage'
 import { syncToGist } from './utils/gistSync'
+import { supabase } from './utils/supabase'
+import { migrateIfNeeded, syncToSupabase } from './utils/dbSync'
+import Auth            from './components/Auth'
 import Overview        from './components/Overview'
 import Assets          from './components/Assets'
 import FinancialRoute  from './components/FinancialRoute'
 import Entry           from './components/Entry'
 import Settings        from './components/Settings'
 import Rates           from './components/Rates'
-import Portfolio       from './components/Portfolio'
+import Investment       from './components/Investment'
 import { TAB_ICONS }   from './components/TabIcons'
 
 const TABS = ['overview', 'assets', 'route', 'rates', 'entry', 'portfolio', 'settings']
@@ -22,9 +25,21 @@ export default function App() {
   const [theme,      setTheme]      = useState(() => localStorage.getItem('theme') || 'light')
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [swiping,    setSwiping]    = useState(false)
+  const [session,    setSession]    = useState(undefined) // undefined = loading, null = signed out
   const swipeRef    = useRef({ startX: 0, startY: 0, active: false, dirLocked: false })
   const drawerRef   = useRef(drawerOpen)
   drawerRef.current = drawerOpen
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setSession(data.session))
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, next) => setSession(next))
+    return () => listener.subscription.unsubscribe()
+  }, [])
+
+  useEffect(() => {
+    if (!session?.user?.id) return
+    migrateIfNeeded(session.user.id).then(() => setState(loadState()))
+  }, [session?.user?.id])
 
   useEffect(() => {
     function onTouchStart(e) {
@@ -77,6 +92,7 @@ export default function App() {
     setState(next)
     saveState(next)
     syncToGist(next).catch(() => {})
+    syncToSupabase(session?.user?.id, next).catch(() => {})
   }
 
   function handleSaveEntry(monthKey, balances, income, expenses, note, refunds, closed, hiddenAccounts, hiddenSources, hiddenExpenses, hiddenRefunds) {
@@ -136,6 +152,9 @@ export default function App() {
     window.scrollTo(0, 0)
   }
 
+  if (session === undefined) return null
+  if (!session) return <Auth />
+
   return (
     <div className="layout">
       <header className="mobile-header">
@@ -168,11 +187,11 @@ export default function App() {
         <div className="app">
           {tab === 'overview'  && <Overview        state={state} />}
           {tab === 'assets'    && <Assets state={state} />}
-          {tab === 'route'     && <FinancialRoute  state={state} />}
+          {tab === 'route'     && <FinancialRoute  state={state} userId={session?.user?.id} />}
           {tab === 'rates'     && <Rates state={state} />}
           {tab === 'entry'     && <Entry           state={state} onSave={handleSaveEntry} onSaveSettings={handleSaveSettings} />}
           {tab === 'settings'  && <Settings        state={state} onSave={handleSaveSettings} onImport={handleImport} onSaveInflation={handleSaveInflation} theme={theme} onThemeChange={setTheme} />}
-          {tab === 'portfolio' && <Portfolio />}
+          {tab === 'portfolio' && <Investment />}
         </div>
       </div>
     </div>

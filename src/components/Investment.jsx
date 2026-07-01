@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect, useRef } from 'react'
 import { Bar, Line } from 'react-chartjs-2'
 import { Chart as ChartJS, ArcElement, Tooltip, BarElement, LineElement, PointElement, LinearScale, CategoryScale, Filler } from 'chart.js'
 import { Doughnut } from 'react-chartjs-2'
-import data from '../data/portfolio.json'
+import data from '../data/investment.json'
 
 ChartJS.register(ArcElement, Tooltip, BarElement, LineElement, PointElement, LinearScale, CategoryScale, Filler)
 
@@ -192,7 +192,7 @@ const PERIODS = [
   { id: '1Y',  label: '1 год', days: 365 },
 ]
 
-export default function Portfolio() {
+export default function Investment() {
   const { textMuted, border } = useChartColors()
   const [expandedTicker, setExpandedTicker] = useState(null)
   const allSeries = useMemo(() => buildNavSeries(data.positions, data.history, data.trades), [])

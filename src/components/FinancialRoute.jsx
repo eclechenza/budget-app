@@ -16,6 +16,7 @@ import {
   fmtInput, parseInput, DEFAULTS, CUR_TABS,
   getInitialCapital, getAvgSavings,
 } from '../utils/forecast'
+import { syncRouteToSupabase } from '../utils/dbSync'
 
 ChartJS.register(CategoryScale, LinearScale, LineElement, PointElement, Tooltip, Legend)
 
@@ -40,11 +41,14 @@ function ageLabel(age) {
   return `${age} лет`
 }
 
+let currentUserId = null
+
 function loadRoute() {
   try { return JSON.parse(localStorage.getItem(ROUTE_KEY) || '{}') } catch { return {} }
 }
 function saveRoute(data) {
   try { localStorage.setItem(ROUTE_KEY, JSON.stringify(data)) } catch {}
+  syncRouteToSupabase(currentUserId, data).catch(() => {})
 }
 
 function monthsLabel(n) {
@@ -162,7 +166,8 @@ function migrateGoals(saved) {
   return result
 }
 
-export default function FinancialRoute({ state }) {
+export default function FinancialRoute({ state, userId }) {
+  currentUserId = userId || null
   const [cur, setCur] = useState('USD')
   const [months, setMonths] = useState(() => loadRoute().months ?? 36)
   const [compound, setCompound] = useState(() => loadRoute().compound ?? true)

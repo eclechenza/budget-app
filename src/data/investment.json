@@ -1,8 +1,8 @@
 {
-  "updatedAt": "2026-06-30T19:32:45.616Z",
-  "nav": 7679.93,
+  "updatedAt": "2026-07-01T14:42:06.000Z",
+  "nav": 7659.71,
   "cash": 41.48,
-  "unrealizedPnl": 65.82,
+  "unrealizedPnl": 53.02,
   "realizedPnl": 0,
   "currency": "USD",
   "trades": [
@@ -26,22 +26,22 @@
       "ticker": "VOO",
       "description": "Vanguard S&P 500 ETF",
       "quantity": 7,
-      "marketPrice": 686.94,
-      "marketValue": 4808.58,
+      "marketPrice": 686.47,
+      "marketValue": 4805.32,
       "averagePrice": 680.58,
-      "unrealizedPnl": 44.5,
-      "dailyPnl": 41.51,
+      "unrealizedPnl": 41.24,
+      "dailyPnl": -2.35,
       "currency": "USD"
     },
     {
       "ticker": "VT",
       "description": "Vanguard Total World Stock ETF",
       "quantity": 18,
-      "marketPrice": 157.08,
-      "marketValue": 2827.44,
+      "marketPrice": 156.55,
+      "marketValue": 2817.9,
       "averagePrice": 155.9,
-      "unrealizedPnl": 21.32,
-      "dailyPnl": 22.5,
+      "unrealizedPnl": 11.78,
+      "dailyPnl": -7.2,
       "currency": "USD"
     }
   ],
@@ -547,7 +547,8 @@
       "2026-06-25",
       "2026-06-26",
       "2026-06-29",
-      "2026-06-30"
+      "2026-06-30",
+      "2026-07-01"
     ],
     "vooClose": [
       501.28,
@@ -1050,7 +1051,8 @@
       675.71,
       670.26,
       681.01,
-      687.01
+      687.01,
+      686.25
     ],
     "vtClose": [
       112.78,
@@ -1553,7 +1555,8 @@
       154.85,
       153.95,
       155.83,
-      157.07
+      157.07,
+      156.47
     ]
   }
 }
